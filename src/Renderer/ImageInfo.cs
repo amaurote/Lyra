@@ -2,7 +2,7 @@ namespace Lyra.Renderer;
 
 public class ImageInfo
 {
-    public FileInfo FileInfo;
+    public FileInfo? FileInfo;
     
     public int Width;
     public int Height;
@@ -10,4 +10,8 @@ public class ImageInfo
     
     public int CurrentImageIndex;
     public int ImageCount;
+
+    public string System = string.Empty;
+    public int DrawableWidth;
+    public int DrawableHeight;
 }

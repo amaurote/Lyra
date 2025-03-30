@@ -42,7 +42,7 @@ public partial class SdlCore : IDisposable
             throw new NotImplementedException("Vulkan backend not implemented yet.");
         }
 
-        DirectoryNavigator.SearchImages("/Users/nineveh/Pictures/wallpaprz/Desert-Sand-Dunes-At-Night-AI-Generated-4K-Wallpaper.jpg");
+        DirectoryNavigator.SearchImages("/Users/nineveh/dev/temp/sample_images/0kaga15ef9yb1.webp");
         LoadImage();
     }
 
@@ -54,6 +54,7 @@ public partial class SdlCore : IDisposable
 
         if (!string.IsNullOrEmpty(imagePath))
         {
+            var oldImage = _image;
             _image = await decoder.DecodeAsync(imagePath);
             var imageInfo = new ImageInfo()
             {
@@ -62,6 +63,8 @@ public partial class SdlCore : IDisposable
                 ImageCount = DirectoryNavigator.GetIndex().count
             };
             _renderer.UpdateFileInfo(imageInfo);
+            
+            oldImage?.Dispose();
         }
     }
 

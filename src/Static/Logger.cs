@@ -9,10 +9,10 @@ public static class Logger
 
     private static readonly Lock Lock = new();
 
-    private static LogStrategy _currentStrategy = LogStrategy.File;
+    private static LogStrategy _currentStrategy = LogStrategy.Console;
     private static bool _debugMode;
 
-    private static string _lastLoggedMessage = string.Empty;
+    private static string _lastDebugMessage = string.Empty;
 
     public static void Log(string message, LogLevel level = LogLevel.Info, bool excludeTimestamp = false)
     {
@@ -33,10 +33,11 @@ public static class Logger
 
         lock (Lock) // Ensure thread safety
         {
-            if (preventRepeat && _lastLoggedMessage == message)
-                return;
-            else
-                _lastLoggedMessage = message;
+            if(level == LogLevelInternal.Debug)
+                if (preventRepeat && _lastDebugMessage == message)
+                    return;
+                else
+                    _lastDebugMessage = message;
 
             var logEntry = excludeTimestamp
                 ? $"[{level}] {message}"
