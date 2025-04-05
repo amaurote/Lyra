@@ -1,11 +1,11 @@
-using Lyra.Static;
 using SkiaSharp;
+using static Lyra.Static.EventManager;
 
-namespace Lyra.Renderer;
+namespace Lyra.Renderer.Overlay;
 
 public class ImageInfoOverlay : IOverlay
 {
-    private readonly SKFont _font;
+    private SKFont? _font;
 
     private readonly SKPaint _textPaint = new()
     {
@@ -13,15 +13,11 @@ public class ImageInfoOverlay : IOverlay
         IsAntialias = true
     };
 
-    public ImageInfoOverlay()
-    {
-        var fontPath = TtfLoader.GetMonospaceFontPath();
-        var typeface = SKTypeface.FromFile(fontPath);
-        _font = new SKFont(typeface, 22);
-    }
-
     public void Render(SKCanvas canvas, ImageInfo info)
     {
+        if (_font == null)
+            return;
+
         if (info.FileInfo == null)
             return;
 
@@ -38,12 +34,18 @@ public class ImageInfoOverlay : IOverlay
 
         const int padding = 12;
         var lineHeight = _font.Size + 7;
-        
+
         var textY = padding + _font.Size;
         foreach (var line in lines)
         {
             canvas.DrawText(line, padding, textY, SKTextAlign.Left, _font, _textPaint);
             textY += lineHeight;
         }
+    }
+
+    public void OnDisplayScaleChanged(DisplayScaleChangedEvent e)
+    {
+        _font?.Dispose();
+        _font = FontHelper.GetScaledMonoFont(16, e.Scale);
     }
 }

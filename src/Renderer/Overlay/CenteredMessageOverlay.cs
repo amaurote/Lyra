@@ -1,11 +1,11 @@
-using Lyra.Static;
 using SkiaSharp;
+using static Lyra.Static.EventManager;
 
-namespace Lyra.Renderer;
+namespace Lyra.Renderer.Overlay;
 
 public class CenteredMessageOverlay : IOverlay
 {
-    private readonly SKFont _font;
+    private SKFont? _font;
 
     private readonly SKPaint _textPaint = new()
     {
@@ -13,14 +13,11 @@ public class CenteredMessageOverlay : IOverlay
         IsAntialias = true
     };
 
-    public CenteredMessageOverlay()
-    {
-        var fontPath = TtfLoader.GetMonospaceFontPath();
-        var typeface = SKTypeface.FromFile(fontPath);
-        _font = new SKFont(typeface, 28);
-    }
     public void Render(SKCanvas canvas, ImageInfo info)
     {
+        if (_font == null)
+            return;
+
         const string message = "NO IMAGE";
         if (info.Width == 0 || info.Height == 0)
         {
@@ -31,5 +28,11 @@ public class CenteredMessageOverlay : IOverlay
 
             canvas.DrawText(message, x, y, SKTextAlign.Left, _font, _textPaint);
         }
+    }
+
+    public void OnDisplayScaleChanged(DisplayScaleChangedEvent e)
+    {
+        _font?.Dispose();
+        _font = FontHelper.GetScaledMonoFont(18, e.Scale);
     }
 }

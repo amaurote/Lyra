@@ -1,4 +1,6 @@
+using Lyra.Renderer.Overlay;
 using SkiaSharp;
+using static Lyra.Static.EventManager;
 using static SDL3.SDL;
 
 
@@ -6,11 +8,11 @@ namespace Lyra.Renderer;
 
 public class SkiaOpenGlRenderer : IRenderer
 {
-    private readonly IntPtr _window;
     private readonly IntPtr _glContext;
     private readonly GRContext _grContext;
     private int _width;
     private int _height;
+    private float _scale;
     private float _zoom = 1.0f;
     private SKPoint _offset = SKPoint.Empty;
 
@@ -21,24 +23,21 @@ public class SkiaOpenGlRenderer : IRenderer
 
     public SkiaOpenGlRenderer(IntPtr window)
     {
-        _window = window;
-        _glContext = GLCreateContext(_window);
-        GLMakeCurrent(_window, _glContext);
+        Subscribe<DrawableSizeChangedEvent>(OnDrawableSizeChanged);
+
+        _glContext = GLCreateContext(window);
+        GLMakeCurrent(window, _glContext);
         GLSetSwapInterval(1);
 
         var glInterface = GRGlInterface.Create();
         _grContext = GRContext.CreateGl(glInterface);
 
-        _imageInfoOverlay = new ImageInfoOverlay();
-        _centeredOverlay = new CenteredMessageOverlay();
-
-        UpdateDrawableSize();
+        _imageInfoOverlay = new ImageInfoOverlay().WithScaleSubscription();
+        _centeredOverlay = new CenteredMessageOverlay().WithScaleSubscription();
     }
 
     public void Render(SKImage? image)
     {
-        UpdateDrawableSize();
-
         var framebufferInfo = new GRGlFramebufferInfo
         {
             FramebufferObjectId = 0,
@@ -66,8 +65,10 @@ public class SkiaOpenGlRenderer : IRenderer
             var top = (_height - drawHeight) / 2 + _offset.Y;
 
             var destRect = new SKRect(left, top, left + drawWidth, top + drawHeight);
+            
             // var sampling = new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear);
             var sampling = new SKSamplingOptions(new SKCubicResampler());
+            
             using var paint = new SKPaint(); // Optional but required by signature
             canvas.DrawImage(image, destRect, sampling, paint);
         }
@@ -77,7 +78,7 @@ public class SkiaOpenGlRenderer : IRenderer
             _imageInfo.Width = image?.Width ?? 0;
             _imageInfo.Height = image?.Height ?? 0;
             _imageInfo.ZoomPercentage = (int)(_zoom * 100);
-            _imageInfo.System = "OpenGL";
+            _imageInfo.System = "Graphics API: OpenGL  |  Sampling: Cubic Resampler";
             _imageInfo.DrawableWidth = _width;
             _imageInfo.DrawableHeight = _height;
             _imageInfoOverlay.Render(canvas, _imageInfo);
@@ -87,15 +88,11 @@ public class SkiaOpenGlRenderer : IRenderer
         canvas.Flush();
     }
 
-    public void UpdateDrawableSize()
+    public void OnDrawableSizeChanged(DrawableSizeChangedEvent e)
     {
-        GetWindowSize(_window, out var logicalW, out var logicalH);
-        var scale = GetWindowDisplayScale(_window);
-
-        _width = (int)(logicalW * scale);
-        _height = (int)(logicalH * scale);
-
-        Logger.LogDebug($"[SkiaOpenGlRenderer] Drawable size: {_width}x{_height}; Scale: x{scale}", preventRepeat: true);
+        _width = e.Width;
+        _height = e.Height;
+        _scale = e.Scale;
     }
 
     public void UpdateZoom(float zoom)
@@ -115,6 +112,7 @@ public class SkiaOpenGlRenderer : IRenderer
 
     public void Dispose()
     {
+        Unsubscribe<DrawableSizeChangedEvent>(OnDrawableSizeChanged);
         _grContext.Dispose();
 
         if (_glContext != IntPtr.Zero) 

@@ -1,6 +1,6 @@
 using SkiaSharp;
 
-namespace Lyra;
+namespace Lyra.ImageLoader;
 
 public interface IImageDecoder
 {
