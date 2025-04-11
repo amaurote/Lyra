@@ -37,6 +37,14 @@ public partial class SdlCore
                     OnWindowDisplayScaleChange();
                     break;
 
+                case EventType.WindowEnterFullscreen:
+                    _isFullscreen = true;
+                    break;
+
+                case EventType.WindowLeaveFullscreen:
+                    _isFullscreen = false;
+                    break;
+                
                 case EventType.Quit:
                     ExitApplication();
                     break;
@@ -51,7 +59,7 @@ public partial class SdlCore
         var width = (int)(logicalW * scale);
         var height = (int)(logicalH * scale);
 
-        Logger.Log($"[EventHandler] Drawable size changed: {width}x{height}; Scale: x{scale}");
+        Logger.LogDebug($"[EventHandler] Drawable size changed: {width}x{height}; Scale: x{scale}");
         Publish(new DrawableSizeChangedEvent(width, height, scale));
     }
 

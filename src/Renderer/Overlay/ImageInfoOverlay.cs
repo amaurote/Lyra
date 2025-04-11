@@ -1,9 +1,12 @@
+using Lyra.Common;
+using Lyra.Common.Data;
+using Lyra.Static;
 using SkiaSharp;
 using static Lyra.Static.EventManager;
 
 namespace Lyra.Renderer.Overlay;
 
-public class ImageInfoOverlay : IOverlay
+public class ImageInfoOverlay : IDisplayScaleAware, IOverlay<ImageInfo>
 {
     private SKFont? _font;
 
@@ -13,7 +16,7 @@ public class ImageInfoOverlay : IOverlay
         IsAntialias = true
     };
 
-    public void Render(SKCanvas canvas, ImageInfo info)
+    public void Render(SKCanvas canvas, DrawableBounds drawableBounds, ImageInfo info)
     {
         if (_font == null)
             return;
@@ -28,7 +31,7 @@ public class ImageInfoOverlay : IOverlay
         var lines = new[]
         {
             $"[File]          {info.CurrentImageIndex}/{info.ImageCount}  |  {info.FileInfo.Name}  |  {fileSize}",
-            $"[Image Size]    {info.Width}x{info.Height}  |  Zoom: {info.ZoomPercentage}%",
+            $"[Image Size]    {info.Width}x{info.Height}  |  Zoom: {info.ZoomPercentage}%  |  Display Mode: {info.DisplayMode.Description()}",
             $"[System]        {info.System}"
         };
 
@@ -43,9 +46,17 @@ public class ImageInfoOverlay : IOverlay
         }
     }
 
+    private float? _lastScale;
+
     public void OnDisplayScaleChanged(DisplayScaleChangedEvent e)
     {
-        _font?.Dispose();
-        _font = FontHelper.GetScaledMonoFont(16, e.Scale);
+        const float tolerance = 0.01f;
+        var roundedScale = MathF.Round(e.Scale, 2);
+        if (_lastScale == null || MathF.Abs((float)(roundedScale - _lastScale)!) > tolerance)
+        {
+            _font?.Dispose();
+            _font = FontHelper.GetScaledMonoFont(12, roundedScale);
+            _lastScale = roundedScale;
+        }
     }
 }

@@ -1,13 +1,20 @@
+using Lyra.Common;
+using Lyra.Common.Data;
+using Lyra.Common.Enum;
 using SkiaSharp;
-using static Lyra.Static.EventManager;
 
 namespace Lyra.Renderer;
 
-public interface IRenderer : IDisposable
+public interface IRenderer : IDisposable, IDrawableSizeAware
 {
-    void Render(SKImage? image);
-    void OnDrawableSizeChanged(DrawableSizeChangedEvent e);
-    void UpdateZoom(float zoom);
-    void UpdateOffset(SKPoint offset);
-    void UpdateFileInfo(ImageInfo imageInfo);
+    void Render();
+    
+    void SetImage(SKImage? image);
+    void SetOffset(SKPoint offset);
+    void SetDisplayMode(DisplayMode displayMode);
+    void SetZoom(int zoomPercentage);
+    void SetFileInfo(ImageInfo imageInfo);
+
+    DisplayMode GetDisplayMode();
+    int GetZoom();
 }

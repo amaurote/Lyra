@@ -1,9 +1,11 @@
+using Lyra.Common;
+using Lyra.Common.Data;
 using SkiaSharp;
 using static Lyra.Static.EventManager;
 
 namespace Lyra.Renderer.Overlay;
 
-public class CenteredMessageOverlay : IOverlay
+public class CenteredMessageOverlay : IDisplayScaleAware, IOverlay<string>
 {
     private SKFont? _font;
 
@@ -13,26 +15,30 @@ public class CenteredMessageOverlay : IOverlay
         IsAntialias = true
     };
 
-    public void Render(SKCanvas canvas, ImageInfo info)
+    public void Render(SKCanvas canvas, DrawableBounds drawableBounds, string text)
     {
         if (_font == null)
             return;
 
-        const string message = "NO IMAGE";
-        if (info.Width == 0 || info.Height == 0)
-        {
-            _font.MeasureText(message, out var bounds, _textPaint);
+        _font.MeasureText(text, out var imageBounds, _textPaint);
 
-            var x = (info.DrawableWidth - bounds.Width) / 2;
-            var y = (info.DrawableHeight + bounds.Height) / 2;
+        var x = (drawableBounds.Width - imageBounds.Width) / 2;
+        var y = (drawableBounds.Height + imageBounds.Height) / 2;
 
-            canvas.DrawText(message, x, y, SKTextAlign.Left, _font, _textPaint);
-        }
+        canvas.DrawText(text, x, y, SKTextAlign.Left, _font, _textPaint);
     }
+
+    private float? _lastScale;
 
     public void OnDisplayScaleChanged(DisplayScaleChangedEvent e)
     {
-        _font?.Dispose();
-        _font = FontHelper.GetScaledMonoFont(18, e.Scale);
+        const float tolerance = 0.01f;
+        var roundedScale = MathF.Round(e.Scale, 2);
+        if (_lastScale == null || MathF.Abs((float)(roundedScale - _lastScale)!) > tolerance)
+        {
+            _font?.Dispose();
+            _font = FontHelper.GetScaledMonoFont(16, roundedScale);
+            _lastScale = roundedScale;
+        }
     }
 }
