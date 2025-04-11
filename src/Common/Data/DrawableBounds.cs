@@ -1,7 +1,7 @@
 namespace Lyra.Common.Data;
 
-public readonly struct DrawableBounds(float width, float height)
+public readonly struct DrawableBounds(int width, int height)
 {
-    public float Width { get; } = width;
-    public float Height { get; } = height;
+    public int Width { get; } = width;
+    public int Height { get; } = height;
 }

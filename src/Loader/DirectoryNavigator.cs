@@ -1,4 +1,4 @@
-namespace Lyra.ImageLoader;
+namespace Lyra.Loader;
 
 public static class DirectoryNavigator
 {

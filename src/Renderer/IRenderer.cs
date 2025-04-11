@@ -14,7 +14,4 @@ public interface IRenderer : IDisposable, IDrawableSizeAware
     void SetDisplayMode(DisplayMode displayMode);
     void SetZoom(int zoomPercentage);
     void SetFileInfo(ImageInfo imageInfo);
-
-    DisplayMode GetDisplayMode();
-    int GetZoom();
 }

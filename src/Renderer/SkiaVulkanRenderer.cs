@@ -36,18 +36,8 @@ public class SkiaVulkanRenderer : IRenderer
     {
         throw new NotImplementedException();
     }
-
-    public DisplayMode GetDisplayMode()
-    {
-        throw new NotImplementedException();
-    }
-
+    
     public void SetZoom(int zoomPercentage)
-    {
-        throw new NotImplementedException();
-    }
-
-    public int GetZoom()
     {
         throw new NotImplementedException();
     }

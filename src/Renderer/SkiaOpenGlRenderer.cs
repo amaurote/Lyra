@@ -59,7 +59,7 @@ public class SkiaOpenGlRenderer : IRenderer
         var imgWidth = _image!.Width;
         var imgHeight = _image.Height;
 
-        var scale = CalculateScale(imgWidth, imgHeight);
+        var scale = _zoomPercentage / 100f;
         var drawWidth = imgWidth * scale;
         var drawHeight = imgHeight * scale;
 
@@ -77,26 +77,6 @@ public class SkiaOpenGlRenderer : IRenderer
         var fbInfo = new GRGlFramebufferInfo(0, 0x8058); // GL_RGBA8
         var renderTarget = new GRBackendRenderTarget(_windowWidth, _windowHeight, 0, 8, fbInfo);
         return SKSurface.Create(_grContext, renderTarget, GRSurfaceOrigin.BottomLeft, SKColorType.Rgba8888)!;
-    }
-
-    private float CalculateScale(int imgWidth, int imgHeight)
-    {
-        switch (_displayMode)
-        {
-            case DisplayMode.FitToScreen:
-                var scale = Math.Min(_windowWidth / (float)imgWidth, _windowHeight / (float)imgHeight);
-                _zoomPercentage = (int)MathF.Round(scale * 100f);
-                if (_zoomPercentage == 100)
-                    _displayMode = DisplayMode.OriginalImageSize;
-                
-                return scale;
-            case DisplayMode.OriginalImageSize:
-                _zoomPercentage = 100;
-                return 1f;
-            case DisplayMode.Free:
-            default:
-                return _zoomPercentage / 100f;
-        }
     }
 
     private void RenderOverlay(SKCanvas canvas)
@@ -127,9 +107,7 @@ public class SkiaOpenGlRenderer : IRenderer
     public void SetImage(SKImage? image) => _image = image;
     public void SetOffset(SKPoint offset) => _offset = offset;
     public void SetDisplayMode(DisplayMode displayMode) => _displayMode = displayMode;
-    public DisplayMode GetDisplayMode() => _displayMode;
     public void SetZoom(int zoomPercentage) => _zoomPercentage = zoomPercentage;
-    public int GetZoom() => _zoomPercentage;
     public void SetFileInfo(ImageInfo imageInfo) => _imageInfo = imageInfo;
 
     public void Dispose()

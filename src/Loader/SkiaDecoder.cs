@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using SkiaSharp;
 
-namespace Lyra.ImageLoader;
+namespace Lyra.Loader;
 
 public class SkiaDecoder : IImageDecoder
 {

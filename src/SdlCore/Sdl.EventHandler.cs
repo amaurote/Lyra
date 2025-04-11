@@ -1,5 +1,7 @@
+using static Lyra.SdlCore.DimensionHelper;
 using static Lyra.Static.EventManager;
 using static SDL3.SDL;
+using DisplayMode = Lyra.Common.Enum.DisplayMode;
 
 namespace Lyra.SdlCore;
 
@@ -54,9 +56,13 @@ public partial class SdlCore
 
     private void OnWindowResized()
     {
-        CalculateDrawableSize(out var width, out var height, out var scale);
-        Logger.LogDebug($"[EventHandler] Drawable size changed: {width}x{height}; Scale: x{scale}");
-        Publish(new DrawableSizeChangedEvent(width, height, scale));
+        var bounds = GetDrawableSize(_window, out var scale);
+        Logger.LogDebug($"[EventHandler] Drawable size changed: {bounds.Width}x{bounds.Height}; Scale: x{scale}");
+        
+        if (_displayMode == DisplayMode.FitToScreen && _image != null) 
+            UpdateFitToScreen();
+        
+        Publish(new DrawableSizeChangedEvent(bounds.Width, bounds.Height, scale));
     }
 
     private void OnWindowDisplayScaleChange()

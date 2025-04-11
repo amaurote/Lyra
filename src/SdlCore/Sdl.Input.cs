@@ -1,4 +1,6 @@
-using Lyra.ImageLoader;
+using Lyra.Common;
+using Lyra.Loader;
+using static Lyra.SdlCore.DimensionHelper;
 using static SDL3.SDL;
 using DisplayMode = Lyra.Common.Enum.DisplayMode;
 
@@ -35,7 +37,7 @@ public partial class SdlCore
         if (DirectoryNavigator.HasNext())
         {
             DirectoryNavigator.MoveToNext();
-            _ = LoadImageAsync();
+            LoadImage();
         }
     }
 
@@ -44,7 +46,7 @@ public partial class SdlCore
         if (DirectoryNavigator.HasPrevious())
         {
             DirectoryNavigator.MoveToPrevious();
-            _ = LoadImageAsync();
+            LoadImage();
         }
     }
 
@@ -53,7 +55,7 @@ public partial class SdlCore
         if (DirectoryNavigator.GetIndex().index != 1)
         {
             DirectoryNavigator.MoveToFirst();
-            _ = LoadImageAsync();
+            LoadImage();
         }
     }
 
@@ -63,7 +65,7 @@ public partial class SdlCore
         if (position.index != position.count)
         {
             DirectoryNavigator.MoveToLast();
-            _ = LoadImageAsync();
+            LoadImage();
         }
     }
 
@@ -116,7 +118,33 @@ public partial class SdlCore
 
     private void ToggleDisplayMode()
     {
-        _displayMode = _zoomPercentage == 100 ? DisplayMode.FitToScreen : DisplayMode.OriginalImageSize;
+        if (_image == null)
+            return;
+
+        if (_displayMode == DisplayMode.Free)
+            _displayMode = GetInitialDisplayMode(_window, _image, out _zoomPercentage);
+        else if (_zoomPercentage == 100)
+        {
+            UpdateFitToScreen();
+        }
+        else
+        {
+            _displayMode = DisplayMode.OriginalImageSize;
+            _zoomPercentage = 100;
+        }
+
         _renderer.SetDisplayMode(_displayMode);
+        _renderer.SetZoom(_zoomPercentage);
+    }
+
+    private void UpdateFitToScreen()
+    {
+        if (_image == null)
+            return;
+
+        _zoomPercentage = GetZoomToFitScreen(_window, _image.Width, _image.Height);
+        _displayMode = _zoomPercentage == 100 ? DisplayMode.OriginalImageSize : DisplayMode.FitToScreen;
+        _renderer.SetDisplayMode(_displayMode);
+        _renderer.SetZoom(_zoomPercentage);
     }
 }
