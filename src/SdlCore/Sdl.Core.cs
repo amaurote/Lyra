@@ -71,6 +71,17 @@ public partial class SdlCore : IDisposable
             _zoomPercentage = 100;
             _renderer.SetZoom(_zoomPercentage);
             _renderer.SetOffset(SKPoint.Empty);
+
+            if (_image != null)
+            {
+                CalculateDrawableSize(out var drawableW, out var drawableH, out _);
+                _displayMode = (_image.Width < drawableW && _image.Height < drawableH)
+                    ? DisplayMode.OriginalImageSize
+                    : DisplayMode.FitToScreen;
+            }
+            else
+                _displayMode = DisplayMode.OriginalImageSize;
+
             _renderer.SetDisplayMode(_displayMode);
         }
     }
@@ -93,6 +104,14 @@ public partial class SdlCore : IDisposable
             _zoomPercentage = _renderer.GetZoom();
             _displayMode = _renderer.GetDisplayMode();
         }
+    }
+
+    private void CalculateDrawableSize(out int width, out int height, out float scale)
+    {
+        GetWindowSize(_window, out var logicalW, out var logicalH);
+        scale = GetWindowDisplayScale(_window);
+        width = (int)(logicalW * scale);
+        height = (int)(logicalH * scale);
     }
 
     private void ExitApplication()

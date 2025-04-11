@@ -21,7 +21,7 @@ public partial class SdlCore
                     break;
 
                 case EventType.DropFile:
-                    // OnDropFile(e);
+                    // OnDropFile(e); // TODO
                     break;
 
                 case EventType.DropComplete:
@@ -54,11 +54,7 @@ public partial class SdlCore
 
     private void OnWindowResized()
     {
-        GetWindowSize(_window, out var logicalW, out var logicalH);
-        var scale = GetWindowDisplayScale(_window);
-        var width = (int)(logicalW * scale);
-        var height = (int)(logicalH * scale);
-
+        CalculateDrawableSize(out var width, out var height, out var scale);
         Logger.LogDebug($"[EventHandler] Drawable size changed: {width}x{height}; Scale: x{scale}");
         Publish(new DrawableSizeChangedEvent(width, height, scale));
     }

@@ -40,13 +40,6 @@ public class SkiaOpenGlRenderer : IRenderer
         _centeredOverlay = new CenteredMessageOverlay().WithScaleSubscription();
     }
 
-    private SKSurface CreateSurface()
-    {
-        var fbInfo = new GRGlFramebufferInfo(0, 0x8058); // GL_RGBA8
-        var renderTarget = new GRBackendRenderTarget(_windowWidth, _windowHeight, 0, 8, fbInfo);
-        return SKSurface.Create(_grContext, renderTarget, GRSurfaceOrigin.BottomLeft, SKColorType.Rgba8888)!;
-    }
-
     public void Render()
     {
         using var surface = CreateSurface();
@@ -54,61 +47,74 @@ public class SkiaOpenGlRenderer : IRenderer
         canvas.Clear(SKColors.Black);
 
         if (_image != null)
-        {
-            var imgWidth = _image.Width;
-            var imgHeight = _image.Height;
+            RenderImage(canvas);
 
-            var scale = 1f;
-            switch (_displayMode)
-            {
-                case DisplayMode.FitToScreen:
-                    scale = Math.Min(_windowWidth / (float)imgWidth, _windowHeight / (float)imgHeight);
-                    _zoomPercentage = (int)MathF.Round(scale * 100f);
-                    break;
-                case DisplayMode.Free:
-                    scale = _zoomPercentage / 100f;
-                    break;
-                case DisplayMode.OriginalImageSize:
-                    _zoomPercentage = 100;
-                    scale = 1f;
-                    break;
-            }
-
-            var drawWidth = imgWidth * scale;
-            var drawHeight = imgHeight * scale;
-
-            var left = (_windowWidth - drawWidth) / 2 + _offset.X;
-            var top = (_windowHeight - drawHeight) / 2 + _offset.Y;
-
-            var destRect = new SKRect(left, top, left + drawWidth, top + drawHeight);
-
-            // var sampling = new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear);
-            var sampling = new SKSamplingOptions(new SKCubicResampler());
-
-            using var paint = new SKPaint(); // Optional but required by signature
-            canvas.DrawImage(_image, destRect, sampling, paint);
-        }
-
-        RenderOverlay(_image, canvas);
+        RenderOverlay(canvas);
 
         canvas.Flush();
     }
 
-    private void RenderOverlay(SKImage? image, SKCanvas canvas)
+    private void RenderImage(SKCanvas canvas)
     {
-        // todo handle image info null
-        if (_imageInfo != null)
-        {
-            _imageInfo.Width = image?.Width ?? 0;
-            _imageInfo.Height = image?.Height ?? 0;
-            _imageInfo.DisplayMode = _displayMode;
-            _imageInfo.ZoomPercentage = _zoomPercentage;
-            _imageInfo.System = "Graphics API: OpenGL  |  Sampling: Cubic Resampler";
-            _imageInfoOverlay.Render(canvas, new DrawableBounds(_windowWidth, _windowHeight), _imageInfo);
+        var imgWidth = _image!.Width;
+        var imgHeight = _image.Height;
 
-            if (_imageInfo.Width == 0 || _imageInfo.Height == 0)
-                _centeredOverlay.Render(canvas, new DrawableBounds(_windowWidth, _windowHeight), "No image");
+        var scale = CalculateScale(imgWidth, imgHeight);
+        var drawWidth = imgWidth * scale;
+        var drawHeight = imgHeight * scale;
+
+        var left = (_windowWidth - drawWidth) / 2 + _offset.X;
+        var top = (_windowHeight - drawHeight) / 2 + _offset.Y;
+        var destRect = new SKRect(left, top, left + drawWidth, top + drawHeight);
+
+        var sampling = new SKSamplingOptions(new SKCubicResampler());
+        using var paint = new SKPaint();
+        canvas.DrawImage(_image, destRect, sampling, paint);
+    }
+
+    private SKSurface CreateSurface()
+    {
+        var fbInfo = new GRGlFramebufferInfo(0, 0x8058); // GL_RGBA8
+        var renderTarget = new GRBackendRenderTarget(_windowWidth, _windowHeight, 0, 8, fbInfo);
+        return SKSurface.Create(_grContext, renderTarget, GRSurfaceOrigin.BottomLeft, SKColorType.Rgba8888)!;
+    }
+
+    private float CalculateScale(int imgWidth, int imgHeight)
+    {
+        switch (_displayMode)
+        {
+            case DisplayMode.FitToScreen:
+                var scale = Math.Min(_windowWidth / (float)imgWidth, _windowHeight / (float)imgHeight);
+                _zoomPercentage = (int)MathF.Round(scale * 100f);
+                if (_zoomPercentage == 100)
+                    _displayMode = DisplayMode.OriginalImageSize;
+                
+                return scale;
+            case DisplayMode.OriginalImageSize:
+                _zoomPercentage = 100;
+                return 1f;
+            case DisplayMode.Free:
+            default:
+                return _zoomPercentage / 100f;
         }
+    }
+
+    private void RenderOverlay(SKCanvas canvas)
+    {
+        if (_imageInfo == null)
+            return;
+
+        _imageInfo.Width = _image?.Width ?? 0;
+        _imageInfo.Height = _image?.Height ?? 0;
+        _imageInfo.DisplayMode = _displayMode;
+        _imageInfo.ZoomPercentage = _zoomPercentage;
+        _imageInfo.System = "Graphics API: OpenGL  |  Sampling: Cubic Resampler";
+
+        var bounds = new DrawableBounds(_windowWidth, _windowHeight);
+        _imageInfoOverlay.Render(canvas, bounds, _imageInfo);
+
+        if (_image == null)
+            _centeredOverlay.Render(canvas, bounds, "No image");
     }
 
     public void OnDrawableSizeChanged(DrawableSizeChangedEvent e)
@@ -118,40 +124,13 @@ public class SkiaOpenGlRenderer : IRenderer
         _displayScale = e.Scale;
     }
 
-    public void SetImage(SKImage? image)
-    {
-        _image = image;
-    }
-
-    public void SetOffset(SKPoint offset)
-    {
-        _offset = offset;
-    }
-
-    public void SetDisplayMode(DisplayMode displayMode)
-    {
-        _displayMode = displayMode;
-    }
-
-    public DisplayMode GetDisplayMode()
-    {
-        return _displayMode;
-    }
-
-    public void SetZoom(int zoomPercentage)
-    {
-        _zoomPercentage = zoomPercentage;
-    }
-
-    public int GetZoom()
-    {
-        return _zoomPercentage;
-    }
-
-    public void SetFileInfo(ImageInfo imageInfo)
-    {
-        _imageInfo = imageInfo;
-    }
+    public void SetImage(SKImage? image) => _image = image;
+    public void SetOffset(SKPoint offset) => _offset = offset;
+    public void SetDisplayMode(DisplayMode displayMode) => _displayMode = displayMode;
+    public DisplayMode GetDisplayMode() => _displayMode;
+    public void SetZoom(int zoomPercentage) => _zoomPercentage = zoomPercentage;
+    public int GetZoom() => _zoomPercentage;
+    public void SetFileInfo(ImageInfo imageInfo) => _imageInfo = imageInfo;
 
     public void Dispose()
     {
