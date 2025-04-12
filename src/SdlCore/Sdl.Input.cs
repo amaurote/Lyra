@@ -1,6 +1,4 @@
-using Lyra.Common;
 using Lyra.Loader;
-using static Lyra.SdlCore.DimensionHelper;
 using static SDL3.SDL;
 using DisplayMode = Lyra.Common.Enum.DisplayMode;
 
@@ -100,20 +98,22 @@ public partial class SdlCore
         Logger.LogDebug($"[Input] Fullscreen: {_isFullscreen}");
     }
 
-    private void ZoomIn()
-    {
-        _zoomPercentage = Math.Min(1000, _zoomPercentage + ZoomStep);
-        _displayMode = _zoomPercentage == 100 ? DisplayMode.OriginalImageSize : DisplayMode.Free;
-        _renderer.SetDisplayMode(_displayMode);
-        _renderer.SetZoom(_zoomPercentage);
-    }
+    private void ZoomIn() => ApplyZoom(_zoomPercentage + ZoomStep);
+    private void ZoomOut() => ApplyZoom(_zoomPercentage - ZoomStep);
 
-    private void ZoomOut()
+    private void ApplyZoom(int newZoom)
     {
-        _zoomPercentage = Math.Max(10, _zoomPercentage - ZoomStep);
+        if (_image == null)
+            return;
+
+        _zoomPercentage = Math.Clamp(newZoom, 10, 1000);
         _displayMode = _zoomPercentage == 100 ? DisplayMode.OriginalImageSize : DisplayMode.Free;
+
         _renderer.SetDisplayMode(_displayMode);
         _renderer.SetZoom(_zoomPercentage);
+
+        PanHelper.Update(_window, _image, _zoomPercentage);
+        ClampOrCenterOffset();
     }
 
     private void ToggleDisplayMode()
@@ -122,7 +122,7 @@ public partial class SdlCore
             return;
 
         if (_displayMode == DisplayMode.Free)
-            _displayMode = GetInitialDisplayMode(_window, _image, out _zoomPercentage);
+            _displayMode = DimensionHelper.GetInitialDisplayMode(_window, _image, out _zoomPercentage);
         else if (_zoomPercentage == 100)
         {
             UpdateFitToScreen();
@@ -135,6 +135,9 @@ public partial class SdlCore
 
         _renderer.SetDisplayMode(_displayMode);
         _renderer.SetZoom(_zoomPercentage);
+
+        PanHelper.Update(_window, _image, _zoomPercentage);
+        ClampOrCenterOffset();
     }
 
     private void UpdateFitToScreen()
@@ -142,9 +145,44 @@ public partial class SdlCore
         if (_image == null)
             return;
 
-        _zoomPercentage = GetZoomToFitScreen(_window, _image.Width, _image.Height);
+        _zoomPercentage = DimensionHelper.GetZoomToFitScreen(_window, _image.Width, _image.Height);
         _displayMode = _zoomPercentage == 100 ? DisplayMode.OriginalImageSize : DisplayMode.FitToScreen;
         _renderer.SetDisplayMode(_displayMode);
         _renderer.SetZoom(_zoomPercentage);
+    }
+
+    private bool _isPanning;
+
+    private void StartPanning(float x, float y)
+    {
+        if (_image == null)
+            return;
+
+        PanHelper.Update(_window, _image, _zoomPercentage);
+        if (PanHelper.CanPan())
+        {
+            _isPanning = true;
+            PanHelper.Start(x, y);
+        }
+    }
+
+    private void StopPanning()
+    {
+        _isPanning = false;
+    }
+
+    private void HandlePanning(float x, float y)
+    {
+        if (_image == null || !_isPanning)
+            return;
+
+        PanHelper.Move(x, y);
+        _renderer.SetOffset(PanHelper.CurrentOffset);
+    }
+
+    private void ClampOrCenterOffset()
+    {
+        PanHelper.Clamp();
+        _renderer.SetOffset(PanHelper.CurrentOffset);
     }
 }

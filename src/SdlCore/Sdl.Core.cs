@@ -2,7 +2,6 @@ using Lyra.Common.Data;
 using Lyra.Loader;
 using Lyra.Renderer;
 using SkiaSharp;
-using static Lyra.SdlCore.DimensionHelper;
 using static SDL3.SDL;
 using DisplayMode = Lyra.Common.Enum.DisplayMode;
 
@@ -71,7 +70,7 @@ public partial class SdlCore : IDisposable
 
         _renderer.SetImage(_image);
         _renderer.SetOffset(SKPoint.Empty);
-        _displayMode = GetInitialDisplayMode(_window, _image, out _zoomPercentage);
+        _displayMode = DimensionHelper.GetInitialDisplayMode(_window, _image, out _zoomPercentage);
         _renderer.SetDisplayMode(_displayMode);
         _renderer.SetZoom(_zoomPercentage);
     }

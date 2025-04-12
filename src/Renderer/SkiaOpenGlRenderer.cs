@@ -1,5 +1,6 @@
 using Lyra.Common.Data;
 using Lyra.Renderer.Overlay;
+using Lyra.Renderer.Overlay.Implementation;
 using SkiaSharp;
 using static Lyra.Static.EventManager;
 using static SDL3.SDL;
@@ -18,7 +19,7 @@ public class SkiaOpenGlRenderer : IRenderer
     private int _zoomPercentage = 100;
 
     private readonly ImageInfoOverlay _imageInfoOverlay;
-    private readonly CenteredMessageOverlay _centeredOverlay;
+    private readonly CenteredTextOverlay _centeredOverlay;
 
     private SKImage? _image;
     private SKPoint _offset = SKPoint.Empty;
@@ -37,7 +38,7 @@ public class SkiaOpenGlRenderer : IRenderer
         _grContext = GRContext.CreateGl(glInterface);
 
         _imageInfoOverlay = new ImageInfoOverlay().WithScaleSubscription();
-        _centeredOverlay = new CenteredMessageOverlay().WithScaleSubscription();
+        _centeredOverlay = new CenteredTextOverlay().WithScaleSubscription();
     }
 
     public void Render()

@@ -1,4 +1,3 @@
-using static Lyra.SdlCore.DimensionHelper;
 using static Lyra.Static.EventManager;
 using static SDL3.SDL;
 using DisplayMode = Lyra.Common.Enum.DisplayMode;
@@ -16,6 +15,22 @@ public partial class SdlCore
                 case EventType.KeyDown
                     when !e.Key.Repeat && _scanActions.TryGetValue(e.Key.Scancode, out var scanAction):
                     scanAction.Invoke();
+                    break;
+
+                case EventType.MouseButtonDown:
+                    OnMouseButtonDown(e);
+                    break;
+
+                case EventType.MouseButtonUp:
+                    OnMouseButtonUp(e);
+                    break;
+
+                case EventType.MouseMotion:
+                    OnMouseMotion(e);
+                    break;
+
+                case EventType.MouseWheel:
+                    // todo
                     break;
 
                 case EventType.DropBegin:
@@ -46,7 +61,7 @@ public partial class SdlCore
                 case EventType.WindowLeaveFullscreen:
                     _isFullscreen = false;
                     break;
-                
+
                 case EventType.Quit:
                     ExitApplication();
                     break;
@@ -56,12 +71,12 @@ public partial class SdlCore
 
     private void OnWindowResized()
     {
-        var bounds = GetDrawableSize(_window, out var scale);
+        var bounds = DimensionHelper.GetDrawableSize(_window, out var scale);
         Logger.LogDebug($"[EventHandler] Drawable size changed: {bounds.Width}x{bounds.Height}; Scale: x{scale}");
-        
-        if (_displayMode == DisplayMode.FitToScreen && _image != null) 
+
+        if (_displayMode == DisplayMode.FitToScreen && _image != null)
             UpdateFitToScreen();
-        
+
         Publish(new DrawableSizeChangedEvent(bounds.Width, bounds.Height, scale));
     }
 
@@ -69,5 +84,29 @@ public partial class SdlCore
     {
         Logger.Log("[EventHandler] Window shown or display scale changed.");
         Publish(new DisplayScaleChangedEvent(GetWindowDisplayScale(_window)));
+    }
+
+    private void OnMouseButtonDown(Event e)
+    {
+        if (e.Button.Button == ButtonLeft)
+        {
+            StartPanning(e.Motion.X, e.Motion.Y);
+        }
+    }
+
+    private void OnMouseButtonUp(Event e)
+    {
+        if (e.Button.Button == ButtonLeft)
+        {
+            StopPanning();
+        }
+    }
+
+    private void OnMouseMotion(Event e)
+    {
+        if (_isPanning)
+        {
+            HandlePanning(e.Motion.X, e.Motion.Y);
+        }
     }
 }

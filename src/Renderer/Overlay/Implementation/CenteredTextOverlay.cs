@@ -3,9 +3,9 @@ using Lyra.Common.Data;
 using SkiaSharp;
 using static Lyra.Static.EventManager;
 
-namespace Lyra.Renderer.Overlay;
+namespace Lyra.Renderer.Overlay.Implementation;
 
-public class CenteredMessageOverlay : IDisplayScaleAware, IOverlay<string>
+public class CenteredTextOverlay : IDisplayScaleAware, IOverlay<string>
 {
     private SKFont? _font;
 

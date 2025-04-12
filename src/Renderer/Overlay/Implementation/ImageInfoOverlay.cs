@@ -4,7 +4,7 @@ using Lyra.Static;
 using SkiaSharp;
 using static Lyra.Static.EventManager;
 
-namespace Lyra.Renderer.Overlay;
+namespace Lyra.Renderer.Overlay.Implementation;
 
 public class ImageInfoOverlay : IDisplayScaleAware, IOverlay<ImageInfo>
 {

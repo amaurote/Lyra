@@ -38,4 +38,13 @@ public static class DimensionHelper
         var scale = Math.Min((float)bounds.Width / imageWidth, (float)bounds.Height / imageHeight);
         return (int)MathF.Round(scale * 100f);
     }
+    
+    public static (int scaledImageWidth, int scaledImageHeight, DrawableBounds drawableBounds, float scale) 
+        GetScaledImageAndDrawableBounds(IntPtr window, SKImage image, int zoomPercentage)
+    {
+        var drawableBounds = GetDrawableSize(window, out var scale);
+        var scaledWidth = (int)(image.Width * (zoomPercentage / 100f));
+        var scaledHeight = (int)(image.Height * (zoomPercentage / 100f));
+        return (scaledWidth, scaledHeight, drawableBounds, scale);
+    }
 }
