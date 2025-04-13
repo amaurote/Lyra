@@ -7,10 +7,11 @@ public static class DirectoryNavigator
         ".bmp",
         ".heic", ".heif", ".avif",
         ".ico",
+        ".jfif",
         ".jpeg", ".jpg",
         ".png",
         ".tga",
-        ".tiff",
+        ".tiff", ".tif",
         ".webp"
     };
 

@@ -69,12 +69,12 @@ public static class PanHelper
         );
     }
     
-    public static SKPoint GetOffsetForZoomAtCursor(SKPoint mouse, int oldZoom, int newZoom)
+    public static SKPoint GetOffsetForZoomAtCursor(SKPoint mouse, int newZoom)
     {
         if (_image == null)
             return CurrentOffset;
 
-        var oldScale = oldZoom / 100f;
+        var oldScale = _zoomPercentage / 100f;
         var newScale = newZoom / 100f;
 
         var imgSize = new SKSize(_image.Width, _image.Height);

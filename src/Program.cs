@@ -19,7 +19,7 @@ class Program
         }
         catch (Exception ex)
         {
-            Log($"[Unhandled Exception]: {ex.Message}", LogLevel.Error);
+            Log($"[Unhandled Exception]: {ex.Message}\n{ex.StackTrace}", LogLevel.Error);
         }
     }
 

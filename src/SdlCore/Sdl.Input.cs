@@ -167,7 +167,7 @@ public partial class SdlCore
             return;
 
         // Calculate new offset
-        var newOffset = PanHelper.GetOffsetForZoomAtCursor(mouse, _zoomPercentage, newZoom);
+        var newOffset = PanHelper.GetOffsetForZoomAtCursor(mouse, newZoom);
 
         // Apply everything
         _zoomPercentage = newZoom;

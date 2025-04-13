@@ -1,17 +1,18 @@
 using System.Collections.Concurrent;
+using Lyra.Loader.Utils;
 using SkiaSharp;
 
 namespace Lyra.Loader;
 
 public class ImageLoader
 {
-    private readonly ConcurrentDictionary<string, SKImage?> _images = new();
-    private SKImage? _currentImage;
-
-    private SkiaDecoder _decoder = new(); // TODO hardcoded decoder
+    private readonly ConcurrentDictionary<string, Task<SKImage?>> _images = new();
+    private readonly TaskFactory _preloadTaskFactory = new(new LimitedTaskScheduler(2));
 
     private const int PreloadDepth = 2;
     private const int CleanupSafeRange = 3;
+
+    private SKImage? _currentImage;
 
     public SKImage? GetImage()
     {
@@ -19,7 +20,8 @@ public class ImageLoader
         if (currentPath == null)
             return null;
 
-        _currentImage = _images.GetOrAdd(currentPath, LoadImageSync);
+        var imageTask = _images.GetOrAdd(currentPath, LoadImageAsync);
+        _currentImage = imageTask.GetAwaiter().GetResult(); // Force sync
         return _currentImage;
     }
 
@@ -31,21 +33,17 @@ public class ImageLoader
         if (current == null)
             return;
 
-        var preload = DirectoryNavigator.GetAdjacent(PreloadDepth);
-
-        foreach (var path in preload.Where(path => !_images.ContainsKey(path)))
+        foreach (var path in DirectoryNavigator.GetAdjacent(PreloadDepth)
+                     .Where(path => !_images.ContainsKey(path)))
         {
-            _ = Task.Run(async () =>
-            {
-                var img = await _decoder.DecodeAsync(path);
-                _images.TryAdd(path, img);
-            });
+            _images[path] = _preloadTaskFactory.StartNew(() => LoadImageAsync(path)).Unwrap();
         }
     }
 
-    private SKImage? LoadImageSync(string path)
+    private async Task<SKImage?> LoadImageAsync(string path)
     {
-        return _decoder.DecodeAsync(path).GetAwaiter().GetResult();
+        var decoder = await DecoderManager.GetDecoderAsync(path);
+        return await decoder.DecodeAsync(path);
     }
 
     private void Cleanup()
@@ -54,12 +52,25 @@ public class ImageLoader
         if (current == null)
             return;
 
-        var safe = DirectoryNavigator.GetAdjacent(CleanupSafeRange).Append(current).ToHashSet();
+        var safe = DirectoryNavigator.GetAdjacent(CleanupSafeRange)
+            .Append(current)
+            .ToHashSet();
 
         foreach (var key in _images.Keys.Except(safe).ToList())
         {
-            if (_images.TryRemove(key, out var image) && image != _currentImage)
-                image?.Dispose();
+            if (_images.TryRemove(key, out var imageTask))
+            {
+                if (imageTask.IsCompletedSuccessfully)
+                {
+                    var image = imageTask.Result;
+                    if (image != _currentImage)
+                        image?.Dispose();
+                }
+                else
+                {
+                    Logger.Log($"[ImageLoader] Removed pending or failed decode: {key}", Logger.LogLevel.Warn);
+                }
+            }
         }
     }
 
@@ -67,8 +78,18 @@ public class ImageLoader
     {
         foreach (var key in _images.Keys)
         {
-            if (_images.TryRemove(key, out var image))
-                image?.Dispose();
+            if (_images.TryRemove(key, out var imageTask))
+            {
+                if (imageTask.IsCompletedSuccessfully)
+                {
+                    var image = imageTask.Result;
+                    image?.Dispose();
+                }
+                else
+                {
+                    Logger.Log($"[ImageLoader] Disposing skipped for in-flight/failed image: {key}", Logger.LogLevel.Warn);
+                }
+            }
         }
     }
 }
