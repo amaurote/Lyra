@@ -1,4 +1,3 @@
-using Lyra.Common;
 using Lyra.Common.Data;
 using Lyra.Common.Enum;
 using Lyra.Static;
@@ -43,6 +42,11 @@ public class SkiaVulkanRenderer : IRenderer
     }
 
     public void SetFileInfo(ImageInfo imageInfo)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void ToggleSampling()
     {
         throw new NotImplementedException();
     }

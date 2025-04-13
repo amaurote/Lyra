@@ -30,9 +30,9 @@ public class ImageInfoOverlay : IDisplayScaleAware, IOverlay<ImageInfo>
 
         var lines = new[]
         {
-            $"[File]          {info.CurrentImageIndex}/{info.ImageCount}  |  {info.FileInfo.Name}  |  {fileSize}",
-            $"[Image Size]    {info.Width}x{info.Height}  |  Zoom: {info.ZoomPercentage}%  |  Display Mode: {info.DisplayMode.Description()}",
-            $"[System]        {info.System}"
+            $"[File]        {info.CurrentImageIndex}/{info.ImageCount}  |  {info.FileInfo.Name}  |  {fileSize}",
+            $"[Image]       {info.Width}x{info.Height}  |  Zoom: {info.ZoomPercentage}%  |  Display Mode: {info.DisplayMode.Description()}",
+            $"[System]      {info.System}"
         };
 
         const int padding = 12;

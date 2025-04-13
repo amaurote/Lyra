@@ -1,6 +1,7 @@
 using Lyra.Common.Data;
 using Lyra.Renderer.Overlay;
 using Lyra.Renderer.Overlay.Implementation;
+using Lyra.Static;
 using SkiaSharp;
 using static Lyra.Static.EventManager;
 using static SDL3.SDL;
@@ -20,6 +21,7 @@ public class SkiaOpenGlRenderer : IRenderer
 
     private readonly ImageInfoOverlay _imageInfoOverlay;
     private readonly CenteredTextOverlay _centeredOverlay;
+    private SamplingMode _samplingMode = SamplingMode.Cubic;
 
     private SKImage? _image;
     private SKPoint _offset = SKPoint.Empty;
@@ -68,7 +70,14 @@ public class SkiaOpenGlRenderer : IRenderer
         var top = (_windowHeight - drawHeight) / 2 + _offset.Y;
         var destRect = new SKRect(left, top, left + drawWidth, top + drawHeight);
 
-        var sampling = new SKSamplingOptions(new SKCubicResampler());
+        var sampling = _samplingMode switch
+        {
+            SamplingMode.Linear => new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear),
+            SamplingMode.Nearest => new SKSamplingOptions(SKFilterMode.Nearest, SKMipmapMode.Nearest),
+            SamplingMode.None => SKSamplingOptions.Default,
+            SamplingMode.Cubic or _ => new SKSamplingOptions(new SKCubicResampler()),
+        };
+        
         using var paint = new SKPaint();
         canvas.DrawImage(_image, destRect, sampling, paint);
     }
@@ -89,7 +98,7 @@ public class SkiaOpenGlRenderer : IRenderer
         _imageInfo.Height = _image?.Height ?? 0;
         _imageInfo.DisplayMode = _displayMode;
         _imageInfo.ZoomPercentage = _zoomPercentage;
-        _imageInfo.System = "Graphics API: OpenGL  |  Sampling: Cubic Resampler";
+        _imageInfo.System = $"Graphics API: OpenGL  |  Sampling: {_samplingMode.Description()}";
 
         var bounds = new DrawableBounds(_windowWidth, _windowHeight);
         _imageInfoOverlay.Render(canvas, bounds, _imageInfo);
@@ -110,6 +119,7 @@ public class SkiaOpenGlRenderer : IRenderer
     public void SetDisplayMode(DisplayMode displayMode) => _displayMode = displayMode;
     public void SetZoom(int zoomPercentage) => _zoomPercentage = zoomPercentage;
     public void SetFileInfo(ImageInfo imageInfo) => _imageInfo = imageInfo;
+    public void ToggleSampling() => _samplingMode = (SamplingMode)(((int)_samplingMode + 1) % Enum.GetValues<SamplingMode>().Length);
 
     public void Dispose()
     {

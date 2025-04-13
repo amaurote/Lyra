@@ -9,6 +9,7 @@ public partial class SdlCore
     private Dictionary<Scancode, Action> _scanActions = null!;
 
     private bool _isFullscreen;
+    private bool _isPanning;
 
     private const int ZoomStep = 10;
 
@@ -26,7 +27,9 @@ public partial class SdlCore
             { Scancode.F, ToggleFullscreen },
             { Scancode.Minus, ZoomOut },
             { Scancode.Equals, ZoomIn },
-            { Scancode.Alpha0, ToggleDisplayMode }
+            { Scancode.Alpha0, ToggleDisplayMode },
+            // { Scancode.Alpha1, ToggleRenderer },
+            { Scancode.Alpha2, ToggleSampling }
         };
     }
 
@@ -97,6 +100,11 @@ public partial class SdlCore
 
         Logger.LogDebug($"[Input] Fullscreen: {_isFullscreen}");
     }
+    
+    private void ToggleSampling()
+    {
+        _renderer.ToggleSampling();
+    }
 
     private void ZoomIn() => ApplyZoom(_zoomPercentage + ZoomStep);
     private void ZoomOut() => ApplyZoom(_zoomPercentage - ZoomStep);
@@ -150,8 +158,6 @@ public partial class SdlCore
         _renderer.SetDisplayMode(_displayMode);
         _renderer.SetZoom(_zoomPercentage);
     }
-
-    private bool _isPanning;
 
     private void StartPanning(float x, float y)
     {
