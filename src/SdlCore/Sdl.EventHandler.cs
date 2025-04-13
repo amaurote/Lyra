@@ -30,7 +30,7 @@ public partial class SdlCore
                     break;
 
                 case EventType.MouseWheel:
-                    // todo
+                    OnMouseWheel(e);
                     break;
 
                 case EventType.DropBegin:
@@ -108,5 +108,11 @@ public partial class SdlCore
         {
             HandlePanning(e.Motion.X, e.Motion.Y);
         }
+    }
+    
+    private void OnMouseWheel(Event e)
+    {
+        GetMouseState(out var mouseX, out var mouseY);
+        ZoomAtPoint(mouseX, mouseY, e.Wheel.Y);
     }
 }

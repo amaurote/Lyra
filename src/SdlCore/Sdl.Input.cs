@@ -1,4 +1,5 @@
 using Lyra.Loader;
+using SkiaSharp;
 using static SDL3.SDL;
 using DisplayMode = Lyra.Common.Enum.DisplayMode;
 
@@ -100,28 +101,10 @@ public partial class SdlCore
 
         Logger.LogDebug($"[Input] Fullscreen: {_isFullscreen}");
     }
-    
+
     private void ToggleSampling()
     {
         _renderer.ToggleSampling();
-    }
-
-    private void ZoomIn() => ApplyZoom(_zoomPercentage + ZoomStep);
-    private void ZoomOut() => ApplyZoom(_zoomPercentage - ZoomStep);
-
-    private void ApplyZoom(int newZoom)
-    {
-        if (_image == null)
-            return;
-
-        _zoomPercentage = Math.Clamp(newZoom, 10, 1000);
-        _displayMode = _zoomPercentage == 100 ? DisplayMode.OriginalImageSize : DisplayMode.Free;
-
-        _renderer.SetDisplayMode(_displayMode);
-        _renderer.SetZoom(_zoomPercentage);
-
-        PanHelper.Update(_window, _image, _zoomPercentage);
-        ClampOrCenterOffset();
     }
 
     private void ToggleDisplayMode()
@@ -146,6 +129,57 @@ public partial class SdlCore
 
         PanHelper.Update(_window, _image, _zoomPercentage);
         ClampOrCenterOffset();
+    }
+
+    private void ZoomIn() => ApplyZoom(_zoomPercentage + ZoomStep);
+    private void ZoomOut() => ApplyZoom(_zoomPercentage - ZoomStep);
+
+    private void ApplyZoom(int newZoom)
+    {
+        if (_image == null)
+            return;
+
+        _zoomPercentage = Math.Clamp(newZoom, 10, 1000);
+        _displayMode = _zoomPercentage == 100 ? DisplayMode.OriginalImageSize : DisplayMode.Free;
+
+        _renderer.SetDisplayMode(_displayMode);
+        _renderer.SetZoom(_zoomPercentage);
+
+        PanHelper.Update(_window, _image, _zoomPercentage);
+        ClampOrCenterOffset();
+    }
+
+    private void ZoomAtPoint(float mouseX, float mouseY, float direction)
+    {
+        if (_image == null)
+            return;
+
+        var normalizedDirection = (direction > 0) ? 1 : -1;
+
+        // Get drawable size and scale (HiDPI-aware)
+        DimensionHelper.GetDrawableSize(_window, out var scale);
+        var mouse = new SKPoint(mouseX * scale, mouseY * scale);
+
+        // Calculate new zoom
+        var oldZoom = _zoomPercentage;
+        var newZoom = Math.Clamp(oldZoom + (normalizedDirection * ZoomStep), 10, 1000);
+        if (newZoom == oldZoom)
+            return;
+
+        // Calculate new offset
+        var newOffset = PanHelper.GetOffsetForZoomAtCursor(mouse, _zoomPercentage, newZoom);
+
+        // Apply everything
+        _zoomPercentage = newZoom;
+        _displayMode = _zoomPercentage == 100 ? DisplayMode.OriginalImageSize : DisplayMode.Free;
+
+        _renderer.SetDisplayMode(_displayMode);
+        _renderer.SetZoom(_zoomPercentage);
+
+        PanHelper.Update(_window, _image, _zoomPercentage);
+        PanHelper.CurrentOffset = newOffset;
+        PanHelper.Clamp();
+        _renderer.SetOffset(PanHelper.CurrentOffset);
     }
 
     private void UpdateFitToScreen()
