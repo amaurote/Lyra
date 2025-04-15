@@ -1,7 +1,7 @@
 using Lyra.Common.Data;
 using Lyra.Renderer.Overlay;
 using Lyra.Renderer.Overlay.Implementation;
-using Lyra.Static;
+using Lyra.Static.Extensions;
 using SkiaSharp;
 using static Lyra.Static.EventManager;
 using static SDL3.SDL;

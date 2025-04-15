@@ -2,12 +2,12 @@ using System.Collections.Concurrent;
 
 namespace Lyra.Loader.Utils;
 
-public class LimitedTaskScheduler : TaskScheduler
+public class PreloadTaskScheduler : TaskScheduler
 {
     private readonly BlockingCollection<Task> _tasks = new();
-    private readonly List<Thread> _threads;
+    private readonly List<Thread> _threads; // Hold thread references to prevent GC collection
 
-    public LimitedTaskScheduler(int maxDegreeOfParallelism)
+    public PreloadTaskScheduler(int maxDegreeOfParallelism)
     {
         _threads = Enumerable.Range(0, maxDegreeOfParallelism).Select(i =>
         {

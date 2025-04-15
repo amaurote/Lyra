@@ -1,5 +1,7 @@
 using System.Runtime.InteropServices;
+using Lyra.Static.Extensions;
 using SkiaSharp;
+using static System.Threading.Thread;
 
 namespace Lyra.Loader.Strategies;
 
@@ -14,7 +16,7 @@ public class SkiaDecoder : IImageDecoder
         ".png",
         ".webp"
     ];
-    
+
     public bool CanDecode(string extension)
     {
         return Extensions.Contains(extension.ToLower());
@@ -22,25 +24,25 @@ public class SkiaDecoder : IImageDecoder
 
     public async Task<SKImage?> DecodeAsync(string path)
     {
-        Logger.LogDebug($"[SkiaDecoder] [Thread: {Environment.CurrentManagedThreadId}] Decoding: {path}");
-        
+        Logger.LogDebug($"[SkiaDecoder] [Thread: {CurrentThread.GetNameOrId()}] Decoding: {path}");
+
+        if (!File.Exists(path))
+        {
+            Logger.Log($"[SkiaDecoder] Image file does not exist: {path}", Logger.LogLevel.Error);
+            return null;
+        }
+
         return await Task.Run(() =>
         {
-            if (!File.Exists(path))
-                return null;
-
             using var stream = File.OpenRead(path);
             using var codec = SKCodec.Create(stream);
+
             if (codec == null)
-            {
-                Logger.Log($"[SkiaDecoder] Image could not be loaded: {path}", Logger.LogLevel.Warn);
-                return null;
-            }
+                return LogFailure("SKCodec could not be created");
 
             var info = codec.Info;
             var rowBytes = info.RowBytes;
             var size = info.Height * rowBytes;
-
             var pixels = Marshal.AllocHGlobal(size);
 
             try
@@ -56,8 +58,13 @@ public class SkiaDecoder : IImageDecoder
                 Marshal.FreeHGlobal(pixels);
             }
 
-            Logger.Log($"[SkiaDecoder] Image could not be loaded: {path}", Logger.LogLevel.Warn);
-            return null;
+            return LogFailure($"Decoding failed with codec result other than Success or IncompleteInput");
         });
+
+        static SKImage? LogFailure(string reason)
+        {
+            Logger.Log($"[SkiaDecoder] Image could not be loaded: {reason}", Logger.LogLevel.Warn);
+            return null;
+        }
     }
 }

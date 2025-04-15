@@ -1,6 +1,6 @@
 using Lyra.Common;
 using Lyra.Common.Data;
-using Lyra.Static;
+using Lyra.Static.Extensions;
 using SkiaSharp;
 using static Lyra.Static.EventManager;
 

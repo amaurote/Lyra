@@ -9,10 +9,9 @@ public static class DecoderManager
     
     private static readonly List<IImageDecoder> Decoders = [SkiaDecoder.Value, ImageSharpDecoder.Value];
 
-    public static Task<IImageDecoder> GetDecoderAsync(string filePath)
+    public static IImageDecoder GetDecoder(string filePath)
     {
         var extension = Path.GetExtension(filePath).ToLower();
-        var decoder = Decoders.FirstOrDefault(it => it.CanDecode(extension), Decoders.First());
-        return Task.FromResult(decoder);
+        return Decoders.FirstOrDefault(it => it.CanDecode(extension), Decoders.First());
     }
 }

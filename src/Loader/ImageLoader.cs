@@ -7,7 +7,7 @@ namespace Lyra.Loader;
 public class ImageLoader
 {
     private readonly ConcurrentDictionary<string, Task<SKImage?>> _images = new();
-    private readonly TaskFactory _preloadTaskFactory = new(new LimitedTaskScheduler(2));
+    private readonly TaskFactory _preloadTaskFactory = new(new PreloadTaskScheduler(2));
 
     private const int PreloadDepth = 2;
     private const int CleanupSafeRange = 3;
@@ -42,7 +42,7 @@ public class ImageLoader
 
     private async Task<SKImage?> LoadImageAsync(string path)
     {
-        var decoder = await DecoderManager.GetDecoderAsync(path);
+        var decoder = DecoderManager.GetDecoder(path);
         return await decoder.DecodeAsync(path);
     }
 
