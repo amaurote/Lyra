@@ -1,8 +1,9 @@
 using System.Reflection;
 using System.Runtime.InteropServices;
+using LibHeifSharp;
 using SDL3;
 
-namespace Lyra;
+namespace Lyra.Static;
 
 public static class NativeLibraryLoader
 {
@@ -29,11 +30,11 @@ public static class NativeLibraryLoader
                 RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "libSDL3.so" :
                 "libSDL3.dylib"
             },
-            // {
-            //     "LIBHEIF", RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "libheif.dll" :
-            //     RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "libheif.so" :
-            //     "libheif.dylib"
-            // }
+            {
+                "LIBHEIF", RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "libheif.dll" :
+                RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "libheif.so" :
+                "libheif.dylib"
+            }
         };
 
         foreach (var (id, libName) in platformLibraries)
@@ -71,7 +72,7 @@ public static class NativeLibraryLoader
     private static void ResolveLibraries()
     {
         NativeLibrary.SetDllImportResolver(typeof(SDL).Assembly, ResolveSdl);
-        // NativeLibrary.SetDllImportResolver(typeof(LibHeifInfo).Assembly, ResolveHeif);
+        NativeLibrary.SetDllImportResolver(typeof(LibHeifInfo).Assembly, ResolveHeif);
     }
 
     private static IntPtr ResolveSdl(string libraryName, Assembly assembly, DllImportSearchPath? searchPath)
@@ -79,6 +80,15 @@ public static class NativeLibraryLoader
         return libraryName switch
         {
             "SDL3" or "SDL3.dll" or "libSDL3.so" => NativeLibrary.Load(PathDictionary["SDL3"]),
+            _ => IntPtr.Zero
+        };
+    }
+    
+    private static IntPtr ResolveHeif(string libraryName, Assembly assembly, DllImportSearchPath? searchPath)
+    {
+        return libraryName switch
+        {
+            "libheif" or "libheif.dll" or "libheif.so" => NativeLibrary.Load(PathDictionary["LIBHEIF"]),
             _ => IntPtr.Zero
         };
     }

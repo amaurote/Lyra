@@ -1,5 +1,6 @@
 using Lyra.Common.Data;
 using Lyra.Loader;
+using Lyra.Loader.Utils;
 using Lyra.Renderer;
 using SkiaSharp;
 using static SDL3.SDL;
@@ -87,6 +88,7 @@ public partial class SdlCore : IDisposable
 
     private void ExitApplication()
     {
+        LoadTimeEstimator.SaveTimeDataToFile();
         _running = false;
     }
 

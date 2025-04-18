@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using Lyra.Loader.Utils;
 using SkiaSharp;
 
@@ -22,6 +23,7 @@ public class ImageLoader
 
         var imageTask = _images.GetOrAdd(currentPath, LoadImageAsync);
         _currentImage = imageTask.GetAwaiter().GetResult(); // Force sync
+        
         return _currentImage;
     }
 
@@ -42,8 +44,16 @@ public class ImageLoader
 
     private async Task<SKImage?> LoadImageAsync(string path)
     {
+        var stopwatch = Stopwatch.StartNew();
+
         var decoder = DecoderManager.GetDecoder(path);
-        return await decoder.DecodeAsync(path);
+        var image = await decoder.DecodeAsync(path);
+
+        stopwatch.Stop();
+        var fileInfo = new FileInfo(path);
+        LoadTimeEstimator.RecordLoadTime(fileInfo.Extension, fileInfo.Length, stopwatch.Elapsed.TotalMilliseconds);
+
+        return image;
     }
 
     private void Cleanup()

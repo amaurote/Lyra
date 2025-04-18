@@ -1,6 +1,6 @@
 ﻿using System.Runtime.InteropServices;
-using Lyra;
 using Lyra.SdlCore;
+using Lyra.Static;
 using static Lyra.Logger;
 
 class Program

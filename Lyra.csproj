@@ -9,13 +9,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="LibHeifSharp" Version="3.2.0" />
     <PackageReference Include="SDL3-CS" Version="3.2.8.3" />
     <PackageReference Include="SDL3-CS.Native" Version="3.2.8" />
     <PackageReference Include="SkiaSharp" Version="3.116.1" />
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.7"/>
+    <PackageReference Include="YamlDotNet" Version="16.3.0" />
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="bin\Debug\net9.0\lib\macOS\libheif.dylib" />
     <None Include="bin\Debug\net9.0\lib\macOS\libSDL3.dylib" />
   </ItemGroup>
 
