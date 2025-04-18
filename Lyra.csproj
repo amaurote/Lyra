@@ -18,8 +18,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="bin\Debug\net9.0\lib\macOS\libexr.dylib" />
     <None Include="bin\Debug\net9.0\lib\macOS\libheif.dylib" />
     <None Include="bin\Debug\net9.0\lib\macOS\libSDL3.dylib" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="native\OpenEXRWrapper\build\" />
   </ItemGroup>
 
 </Project>

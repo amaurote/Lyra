@@ -7,8 +7,9 @@ public static class DecoderManager
     private static readonly Lazy<IImageDecoder> SkiaDecoder = new(() => new SkiaDecoder());
     private static readonly Lazy<IImageDecoder> ImageSharpDecoder = new(() => new ImageSharpDecoder());
     private static readonly Lazy<IImageDecoder> HeifDecoder = new(() => new HeifDecoder());
+    private static readonly Lazy<IImageDecoder> ExrDecoder = new(() => new ExrDecoder());
 
-    private static readonly List<IImageDecoder> Decoders = [SkiaDecoder.Value, ImageSharpDecoder.Value, HeifDecoder.Value];
+    private static readonly List<IImageDecoder> Decoders = [SkiaDecoder.Value, ImageSharpDecoder.Value, HeifDecoder.Value, ExrDecoder.Value];
 
     public static IImageDecoder GetDecoder(string filePath)
     {

@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Runtime.InteropServices;
 using LibHeifSharp;
+using Lyra.Interop;
 using SDL3;
 
 namespace Lyra.Static;
@@ -34,6 +35,11 @@ public static class NativeLibraryLoader
                 "LIBHEIF", RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "libheif.dll" :
                 RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "libheif.so" :
                 "libheif.dylib"
+            },
+            {
+                "EXR", RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "libexr.dll" :
+                RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "libexr.so" :
+                "libexr.dylib"
             }
         };
 
@@ -73,6 +79,7 @@ public static class NativeLibraryLoader
     {
         NativeLibrary.SetDllImportResolver(typeof(SDL).Assembly, ResolveSdl);
         NativeLibrary.SetDllImportResolver(typeof(LibHeifInfo).Assembly, ResolveHeif);
+        NativeLibrary.SetDllImportResolver(typeof(ExrNative).Assembly, ResolveExr);
     }
 
     private static IntPtr ResolveSdl(string libraryName, Assembly assembly, DllImportSearchPath? searchPath)
@@ -89,6 +96,15 @@ public static class NativeLibraryLoader
         return libraryName switch
         {
             "libheif" or "libheif.dll" or "libheif.so" => NativeLibrary.Load(PathDictionary["LIBHEIF"]),
+            _ => IntPtr.Zero
+        };
+    }
+
+    private static IntPtr ResolveExr(string libraryName, Assembly assembly, DllImportSearchPath? searchPath)
+    {
+        return libraryName switch
+        {
+            "libexr" or "libexr.dll" or "libexr.so" or "libexr.dylib" => NativeLibrary.Load(PathDictionary["EXR"]),
             _ => IntPtr.Zero
         };
     }
