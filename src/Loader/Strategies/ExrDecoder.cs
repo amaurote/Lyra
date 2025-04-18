@@ -14,7 +14,7 @@ public class ExrDecoder : IImageDecoder
 
     public async Task<SKImage?> DecodeAsync(string path)
     {
-        Logger.LogDebug($"[ImageSharpDecoder] [Thread: {CurrentThread.GetNameOrId()}] Decoding: {path}");
+        Logger.LogDebug($"[ExrDecoder] [Thread: {CurrentThread.GetNameOrId()}] Decoding: {path}");
 
         return await Task.Run(() =>
         {

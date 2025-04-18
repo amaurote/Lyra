@@ -16,7 +16,7 @@ public class HeifDecoder : IImageDecoder
 
     public async Task<SKImage?> DecodeAsync(string path)
     {
-        Logger.LogDebug($"[ImageSharpDecoder] [Thread: {CurrentThread.GetNameOrId()}] Decoding: {path}");
+        Logger.LogDebug($"[HeifDecoder] [Thread: {CurrentThread.GetNameOrId()}] Decoding: {path}");
         
         return await Task.Run(() =>
         {
