@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
@@ -6,7 +7,7 @@ namespace Lyra.Loader.Utils;
 public static class LoadTimeEstimator
 {
     private static readonly string TimeFilePath = Path.Combine(LyraDataDirectory.GetDataDirectory(), "load_time_data.yaml");
-    private static readonly Dictionary<(string Extension, int SizeBucket), List<double>> LoadTimeData = new();
+    private static readonly ConcurrentDictionary<(string Extension, int SizeBucket), List<double>> LoadTimeData = new();
 
     private const int UnsavedChangesThreshold = 5;
     private const int MaxSamplesPerBucket = 20;
@@ -23,15 +24,15 @@ public static class LoadTimeEstimator
         if (!TryGetKey(extension, sizeInBytes, out var key))
             return;
 
-        if (!LoadTimeData.ContainsKey(key))
-            LoadTimeData[key] = [];
+        var list = LoadTimeData.GetOrAdd(key, _ => []);
+        lock (list)
+        {
+            list.Add(loadTime);
+            Logger.LogDebug($"[LoadTimeEstimator] {key.Extension}: {sizeInBytes} bytes, {loadTime} ms.");
 
-        LoadTimeData[key].Add(loadTime);
-        Logger.LogDebug($"[LoadTimeEstimator] {key.Extension}: {sizeInBytes} bytes, {loadTime} ms.");
-
-        // Keep only the last 20 records for each bucket to avoid excessive memory use
-        if (LoadTimeData[key].Count > MaxSamplesPerBucket)
-            LoadTimeData[key].RemoveAt(0);
+            if (list.Count > MaxSamplesPerBucket)
+                list.RemoveAt(0);
+        }
 
         // Save periodically
         if (++_unsavedChangesCount >= UnsavedChangesThreshold)
@@ -47,8 +48,11 @@ public static class LoadTimeEstimator
             return 0;
 
         if (LoadTimeData.TryGetValue(key, out var loadTimes))
+        {
             // Direct match found, return the average
-            return loadTimes.Average();
+            lock (loadTimes)
+                return loadTimes.Average();
+        }
 
         // No exact match: Find closest available bucket
         var availableBuckets = LoadTimeData.Keys
@@ -62,23 +66,29 @@ public static class LoadTimeEstimator
 
         // Interpolate between the closest known buckets
         var closestBucket = availableBuckets.First();
-        return LoadTimeData[(key.Extension, closestBucket)].Average();
+        var fallbackKey = (key.Extension, closestBucket);
+
+        if (LoadTimeData.TryGetValue(fallbackKey, out var fallbackTimes))
+            lock (fallbackTimes)
+                return fallbackTimes.Average();
+
+        return 0;
     }
 
     public static void SaveTimeDataToFile(bool suppressLogging = false)
     {
         try
         {
-            var formattedData = LoadTimeData.ToDictionary(
+            var snapshot = LoadTimeData.ToDictionary(
                 entry => $"{entry.Key.Extension}_{entry.Key.SizeBucket}",
-                entry => entry.Value
+                entry => entry.Value.ToList()
             );
 
             var serializer = new SerializerBuilder()
                 .WithNamingConvention(CamelCaseNamingConvention.Instance)
                 .Build();
 
-            var yaml = serializer.Serialize(formattedData);
+            var yaml = serializer.Serialize(snapshot);
             File.WriteAllText(TimeFilePath, yaml);
 
             if (!suppressLogging)

@@ -5,20 +5,20 @@ using static System.Threading.Thread;
 
 namespace Lyra.Loader.Strategies;
 
-public class ExrDecoder : IImageDecoder
+public class HdrDecoder : IImageDecoder
 {
     public bool CanDecode(string extension)
     {
-        return extension.Equals(".exr", StringComparison.OrdinalIgnoreCase);
+        return extension.Equals(".hdr", StringComparison.OrdinalIgnoreCase);
     }
 
     public async Task<SKImage?> DecodeAsync(string path)
     {
-        Logger.LogDebug($"[ImageSharpDecoder] [Thread: {CurrentThread.GetNameOrId()}] Decoding: {path}");
+        Logger.LogDebug($"[HdrDecoder] [Thread: {CurrentThread.GetNameOrId()}] Decoding: {path}");
 
         return await Task.Run(() =>
         {
-            if (!ExrNative.load_exr_rgba(path, out var ptr, out var width, out var height))
+            if (!HdrNative.load_hdr_rgba(path, out var ptr, out var width, out var height))
                 return null;
 
             var totalPixels = width * height;
@@ -32,29 +32,21 @@ public class ExrDecoder : IImageDecoder
                 unsafe
                 {
                     var floatSpan = new Span<float>((void*)ptr, floatCount);
-
-                    var isGrayscale = true;
-                    for (var i = 0; i < totalPixels && isGrayscale; i++)
-                    {
-                        if (floatSpan[i * 4 + 1] != 0f || floatSpan[i * 4 + 2] != 0f)
-                            isGrayscale = false;
-                    }
-
-                    var pixelsPtr = bitmap.GetPixels();
+                    IntPtr pixelsPtr = bitmap.GetPixels();
                     var byteSpan = new Span<byte>((void*)pixelsPtr, width * height * 4);
 
                     for (var i = 0; i < totalPixels; i++)
                     {
-                        var r = floatSpan[i * 4 + 0];
-                        var g = isGrayscale ? r : floatSpan[i * 4 + 1];
-                        var b = isGrayscale ? r : floatSpan[i * 4 + 2];
-                        var a = floatSpan[i * 4 + 3];
+                        var r = ToneMap(floatSpan[i * 4 + 0]);
+                        var g = ToneMap(floatSpan[i * 4 + 1]);
+                        var b = ToneMap(floatSpan[i * 4 + 2]);
+                        var a = ToneMap(floatSpan[i * 4 + 3]);
 
                         var idx = i * 4;
-                        byteSpan[idx + 0] = ToneMap(r);
-                        byteSpan[idx + 1] = ToneMap(g);
-                        byteSpan[idx + 2] = ToneMap(b);
-                        byteSpan[idx + 3] = ToneMap(a);
+                        byteSpan[idx + 0] = r;
+                        byteSpan[idx + 1] = g;
+                        byteSpan[idx + 2] = b;
+                        byteSpan[idx + 3] = a;
                     }
                 }
 
@@ -62,7 +54,7 @@ public class ExrDecoder : IImageDecoder
             }
             finally
             {
-                ExrNative.free_exr_pixels(ptr);
+                HdrNative.free_hdr_pixels(ptr);
             }
         });
     }

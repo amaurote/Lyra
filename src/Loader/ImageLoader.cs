@@ -51,7 +51,9 @@ public class ImageLoader
 
         stopwatch.Stop();
         var fileInfo = new FileInfo(path);
-        LoadTimeEstimator.RecordLoadTime(fileInfo.Extension, fileInfo.Length, stopwatch.Elapsed.TotalMilliseconds);
+        
+        if (image != null)
+            LoadTimeEstimator.RecordLoadTime(fileInfo.Extension, fileInfo.Length, stopwatch.Elapsed.TotalMilliseconds);
 
         return image;
     }

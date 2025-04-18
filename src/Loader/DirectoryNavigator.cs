@@ -5,7 +5,7 @@ public static class DirectoryNavigator
     private static readonly HashSet<string> ImageExtensions = new(StringComparer.OrdinalIgnoreCase)
     {
         ".bmp",
-        ".exr",
+        ".exr", ".hdr",
         ".heic", ".heif", ".avif",
         ".ico",
         ".jfif",

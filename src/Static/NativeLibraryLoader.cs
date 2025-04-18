@@ -1,7 +1,6 @@
 using System.Reflection;
 using System.Runtime.InteropServices;
 using LibHeifSharp;
-using Lyra.Interop;
 using SDL3;
 
 namespace Lyra.Static;
@@ -40,6 +39,11 @@ public static class NativeLibraryLoader
                 "EXR", RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "libexr.dll" :
                 RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "libexr.so" :
                 "libexr.dylib"
+            },
+            {
+                "HDR", RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "libhdr.dll" :
+                RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "libhdr.so" :
+                "libhdr.dylib"
             }
         };
 
@@ -79,7 +83,7 @@ public static class NativeLibraryLoader
     {
         NativeLibrary.SetDllImportResolver(typeof(SDL).Assembly, ResolveSdl);
         NativeLibrary.SetDllImportResolver(typeof(LibHeifInfo).Assembly, ResolveHeif);
-        NativeLibrary.SetDllImportResolver(typeof(ExrNative).Assembly, ResolveExr);
+        NativeLibrary.SetDllImportResolver(typeof(NativeLibraryLoader).Assembly, ResolveInterop);
     }
 
     private static IntPtr ResolveSdl(string libraryName, Assembly assembly, DllImportSearchPath? searchPath)
@@ -90,7 +94,7 @@ public static class NativeLibraryLoader
             _ => IntPtr.Zero
         };
     }
-    
+
     private static IntPtr ResolveHeif(string libraryName, Assembly assembly, DllImportSearchPath? searchPath)
     {
         return libraryName switch
@@ -100,11 +104,12 @@ public static class NativeLibraryLoader
         };
     }
 
-    private static IntPtr ResolveExr(string libraryName, Assembly assembly, DllImportSearchPath? searchPath)
+    private static IntPtr ResolveInterop(string libraryName, Assembly assembly, DllImportSearchPath? searchPath)
     {
         return libraryName switch
         {
             "libexr" or "libexr.dll" or "libexr.so" or "libexr.dylib" => NativeLibrary.Load(PathDictionary["EXR"]),
+            "libhdr" or "libhdr.dll" or "libhdr.so" or "libhdr.dylib" => NativeLibrary.Load(PathDictionary["HDR"]),
             _ => IntPtr.Zero
         };
     }
