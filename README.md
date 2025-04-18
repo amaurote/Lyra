@@ -1,28 +1,21 @@
-# Lyra Viewer Use Case:
+# Lyra Viewer
 
 Lyra Viewer is built primarily using **SDL3** and **SkiaSharp**, combining the speed and flexibility of native rendering
 with a streamlined .NET architecture.
 
-It is designed for **performance, minimalism, and smooth navigation**, making it ideal for quickly browsing large image
-collections. Unlike general-purpose image viewers, Lyra Viewer prioritizes speed, minimalism, and features that directly
-benefit users who treat images as creative building blocks rather than just media to consume.
-
-Whether you're a **digital artist**, **graphic designer**, **photographer**, or **developer working with image assets**,
-Lyra provides a fast, distraction-free way to preview and inspect images.
-
 ---
 
-## Target Users
+## Overview
+
+Lyra Viewer is a high-performance image viewer built with **SDL3** and **SkiaSharp**, designed for **speed, minimalism, and smooth navigation**. It provides a distraction-free way to preview and inspect image assets — ideal for creative professionals that use images as a core resource in their workflow, such as:
 
 - 2D/3D artists
 - Game developers
 - Environment designers
 - Asset pipeline engineers
+- Graphic designers and photographers  
 
-## Purpose
-
-Allow users to quickly open and inspect texture maps, HDRIs, baked image assets, and previews exported from Quixel
-Bridge, Blender, and other asset creation tools.
+Lyra is optimized for quickly browsing large collections of texture maps, HDRIs, baked image assets, and previews exported from tools like **Blender**, **Quixel Bridge**, and other content creation pipelines.
 
 ---
 
@@ -41,6 +34,13 @@ Bridge, Blender, and other asset creation tools.
 | `.tif` / `.tiff` | High-quality textures, often 16/32-bit, used in VFX.                          |
 | `.bmp`           | Rare but used in older or internal pipelines.                                 |
 
+### **Modern / Web-Friendly Formats**
+
+| Format                      | Description                                                              |
+|-----------------------------|--------------------------------------------------------------------------|
+| `.webp`                     | Lightweight format with alpha support, used for previews and thumbnails. |
+| `.heif` / `.heic` / `.avif` | High Efficiency format common on macOS/iOS systems.                      |
+
 ### **High Dynamic Range Formats**
 
 | Format | Description                                                                |
@@ -54,13 +54,6 @@ Bridge, Blender, and other asset creation tools.
 |----------------------|-------------------------------------------------------------------------|
 | ~~`.dds`~~           | ~~DirectDraw Surface, used in real-time engines (DXT/BC compression).~~ |
 | ~~`.ktx` / `.ktx2`~~ | ~~Modern GPU-optimized format for real-time textures.~~                 |
-
-### **Modern / Web-Friendly Formats**
-
-| Format                      | Description                                                              |
-|-----------------------------|--------------------------------------------------------------------------|
-| `.webp`                     | Lightweight format with alpha support, used for previews and thumbnails. |
-| `.heif` / `.heic` / `.avif` | High Efficiency format common on macOS/iOS systems.                      |
 
 ### **Vector Formats / Specialized Formats**
 
