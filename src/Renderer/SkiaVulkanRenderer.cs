@@ -51,6 +51,11 @@ public class SkiaVulkanRenderer : IRenderer
         throw new NotImplementedException();
     }
 
+    public void ToggleBackground()
+    {
+        throw new NotImplementedException();
+    }
+
     public void Dispose()
     {
         throw new NotImplementedException();

@@ -7,10 +7,7 @@ namespace Lyra.Loader.Strategies;
 
 public class ExrDecoder : IImageDecoder
 {
-    public bool CanDecode(string extension)
-    {
-        return extension.Equals(".exr", StringComparison.OrdinalIgnoreCase);
-    }
+    public bool CanDecode(string extension) => extension.Equals(".exr", StringComparison.OrdinalIgnoreCase);
 
     public async Task<SKImage?> DecodeAsync(string path)
     {

@@ -15,11 +15,13 @@ public class CenteredTextOverlay : IDisplayScaleAware, IOverlay<string>
         IsAntialias = true
     };
 
-    public void Render(SKCanvas canvas, DrawableBounds drawableBounds, string text)
+    public void Render(SKCanvas canvas, DrawableBounds drawableBounds, SKColor textPaint, string text)
     {
         if (_font == null)
             return;
 
+        _textPaint.Color = textPaint;
+        
         _font.MeasureText(text, out var imageBounds, _textPaint);
 
         var x = (drawableBounds.Width - imageBounds.Width) / 2;

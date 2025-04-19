@@ -5,5 +5,5 @@ namespace Lyra.Renderer.Overlay;
 
 public interface IOverlay<in T>
 {
-    void Render(SKCanvas canvas, DrawableBounds drawableBounds, T data);
+    void Render(SKCanvas canvas, DrawableBounds drawableBounds, SKColor textColor, T data);
 }

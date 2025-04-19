@@ -16,4 +16,5 @@ public interface IRenderer : IDisposable, IDrawableSizeAware
     void SetFileInfo(ImageInfo imageInfo);
     
     void ToggleSampling();
+    void ToggleBackground();
 }

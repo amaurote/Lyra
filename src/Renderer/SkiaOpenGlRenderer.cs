@@ -22,6 +22,7 @@ public class SkiaOpenGlRenderer : IRenderer
     private readonly ImageInfoOverlay _imageInfoOverlay;
     private readonly CenteredTextOverlay _centeredOverlay;
     private SamplingMode _samplingMode = SamplingMode.Cubic;
+    private BackgroundMode _backgroundMode = BackgroundMode.Black;
 
     private SKImage? _image;
     private SKPoint _offset = SKPoint.Empty;
@@ -47,8 +48,21 @@ public class SkiaOpenGlRenderer : IRenderer
     {
         using var surface = CreateSurface();
         var canvas = surface.Canvas;
-        canvas.Clear(SKColors.Black);
 
+        switch (_backgroundMode)
+        {
+            case BackgroundMode.White:
+                canvas.Clear(SKColors.White);
+                break;
+            case BackgroundMode.Checkerboard:
+                DrawCheckerboardPattern(canvas);
+                break;
+            case BackgroundMode.Black:
+            default:
+                canvas.Clear(SKColors.Black);
+                break;
+        }
+        
         if (_image != null)
             RenderImage(canvas);
 
@@ -77,7 +91,7 @@ public class SkiaOpenGlRenderer : IRenderer
             SamplingMode.None => SKSamplingOptions.Default,
             SamplingMode.Cubic or _ => new SKSamplingOptions(new SKCubicResampler()),
         };
-        
+
         using var paint = new SKPaint();
         canvas.DrawImage(_image, destRect, sampling, paint);
     }
@@ -101,10 +115,31 @@ public class SkiaOpenGlRenderer : IRenderer
         _imageInfo.System = $"Graphics API: OpenGL  |  Sampling: {_samplingMode.Description()}";
 
         var bounds = new DrawableBounds(_windowWidth, _windowHeight);
-        _imageInfoOverlay.Render(canvas, bounds, _imageInfo);
+        var textColor = _backgroundMode == BackgroundMode.Black ? SKColors.White : SKColors.Black;
+        _imageInfoOverlay.Render(canvas, bounds, textColor, _imageInfo);
 
         if (_image == null)
-            _centeredOverlay.Render(canvas, bounds, "No image");
+            _centeredOverlay.Render(canvas, bounds, textColor, "No image");
+    }
+
+    private void DrawCheckerboardPattern(SKCanvas canvas)
+    {
+        var squareSize = (int)(24 * _displayScale);
+
+        using var lightGray = new SKPaint();
+        lightGray.Color = new SKColor(220, 220, 220);
+        lightGray.IsAntialias = false;
+
+        using var darkGray = new SKPaint();
+        darkGray.Color = new SKColor(180, 180, 180);
+        darkGray.IsAntialias = false;
+
+        for (var y = 0; y < _windowHeight; y += squareSize)
+        for (var x = 0; x < _windowWidth; x += squareSize)
+        {
+            var rect = new SKRect(x, y, x + squareSize, y + squareSize);
+            canvas.DrawRect(rect, ((x / squareSize + y / squareSize) % 2 == 0) ? lightGray : darkGray);
+        }
     }
 
     public void OnDrawableSizeChanged(DrawableSizeChangedEvent e)
@@ -120,6 +155,7 @@ public class SkiaOpenGlRenderer : IRenderer
     public void SetZoom(int zoomPercentage) => _zoomPercentage = zoomPercentage;
     public void SetFileInfo(ImageInfo imageInfo) => _imageInfo = imageInfo;
     public void ToggleSampling() => _samplingMode = (SamplingMode)(((int)_samplingMode + 1) % Enum.GetValues<SamplingMode>().Length);
+    public void ToggleBackground() => _backgroundMode = (BackgroundMode)(((int)_backgroundMode + 1) % Enum.GetValues<BackgroundMode>().Length);
 
     public void Dispose()
     {

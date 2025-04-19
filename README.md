@@ -7,15 +7,18 @@ with a streamlined .NET architecture.
 
 ## Overview
 
-Lyra Viewer is a high-performance image viewer built with **SDL3** and **SkiaSharp**, designed for **speed, minimalism, and smooth navigation**. It provides a distraction-free way to preview and inspect image assets — ideal for creative professionals that use images as a core resource in their workflow, such as:
+Lyra Viewer is a high-performance image viewer built with **SDL3** and **SkiaSharp**, designed for **speed, minimalism,
+and smooth navigation**. It provides a distraction-free way to preview and inspect image assets — ideal for creative
+professionals that use images as a core resource in their workflow, such as:
 
 - 2D/3D artists
 - Game developers
 - Environment designers
 - Asset pipeline engineers
-- Graphic designers and photographers  
+- Graphic designers and other advanced users
 
-Lyra is optimized for quickly browsing large collections of texture maps, HDRIs, baked image assets, and previews exported from tools like **Blender**, **Quixel Bridge**, and other content creation pipelines.
+Lyra is optimized for quickly browsing large collections of texture maps, HDRIs, baked image assets, and previews
+exported from tools like **Blender**, **Quixel Bridge**, and other content creation pipelines.
 
 ---
 
@@ -82,7 +85,7 @@ Lyra is optimized for quickly browsing large collections of texture maps, HDRIs,
 | `Mouse Wheel`  | Zoom at cursor position                      |
 | `0`            | Toggle **Fit to Screen** / **Original Size** |
 | `F`            | Toggle fullscreen                            |
-| ~~`B`~~        | ~~Toggle background mode~~                   |
+| `B`            | Toggle background mode                       |
 | ~~`I`~~        | ~~Toggle image information overlay~~         |
 | `Esc`          | Exit application                             |
 
@@ -105,7 +108,7 @@ modern image formats and fast rendering:
 | **OpenEXR**              | High dynamic range (HDR) image decoding (.exr) | BSD-3-Clause  |
 | **rgbe**                 | Radiance HDR (.hdr) image decoding             | Public Domain |
 
-For more information, visit the relevant **GitHub repositories**:
+For more information, visit the relevant **repositories**:
 
 - [SDL3-CS](https://github.com/ethereal-developers-club/SDL3-CS)
 - [SkiaSharp](https://github.com/mono/SkiaSharp)

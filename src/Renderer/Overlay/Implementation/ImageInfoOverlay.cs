@@ -16,13 +16,15 @@ public class ImageInfoOverlay : IDisplayScaleAware, IOverlay<ImageInfo>
         IsAntialias = true
     };
 
-    public void Render(SKCanvas canvas, DrawableBounds drawableBounds, ImageInfo info)
+    public void Render(SKCanvas canvas, DrawableBounds drawableBounds, SKColor textPaint, ImageInfo info)
     {
         if (_font == null)
             return;
 
         if (info.FileInfo == null)
             return;
+        
+        _textPaint.Color = textPaint;
 
         var fileSize = info.FileInfo.Length >= 2 * 1024 * 1024
             ? $"{Math.Round((double)info.FileInfo.Length / (1024 * 1024), 1)} MB"

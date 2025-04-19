@@ -7,10 +7,7 @@ namespace Lyra.Loader.Strategies;
 
 public class HdrDecoder : IImageDecoder
 {
-    public bool CanDecode(string extension)
-    {
-        return extension.Equals(".hdr", StringComparison.OrdinalIgnoreCase);
-    }
+    public bool CanDecode(string extension) => extension.Equals(".hdr", StringComparison.OrdinalIgnoreCase);
 
     public async Task<SKImage?> DecodeAsync(string path)
     {
