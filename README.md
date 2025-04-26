@@ -67,11 +67,11 @@ exported from tools like **Blender**, **Quixel Bridge**, and other content creat
 
 ### **Minor Formats**
 
-| Format      | Description                                                           |
-|-------------|-----------------------------------------------------------------------|
-| `.ico`      | Icon files, often exported from Blender or as part of UI asset packs. |
-| ~~`.icns`~~ | ~~macOS icon format, used in application packaging.~~                 |
-| ~~`.jp2`~~  | ~~JPEG 2000, rare but sometimes seen in asset pipelines.~~            |
+| Format      | Description                                                |
+|-------------|------------------------------------------------------------|
+| `.ico`      | Icon files, often part of UI asset packs.                  |
+| ~~`.icns`~~ | ~~macOS icon format, used in application packaging.~~      |
+| ~~`.jp2`~~  | ~~JPEG 2000, rare but sometimes seen in asset pipelines.~~ |
 
 ---
 
@@ -84,6 +84,7 @@ exported from tools like **Blender**, **Quixel Bridge**, and other content creat
 | `+` / `-`      | Zoom in / Zoom out                           |
 | `Mouse Wheel`  | Zoom at cursor position                      |
 | `0`            | Toggle **Fit to Screen** / **Original Size** |
+| `9`            | Toggle sampling mode                         |
 | `F`            | Toggle fullscreen                            |
 | `B`            | Toggle background mode                       |
 | ~~`I`~~        | ~~Toggle image information overlay~~         |
@@ -129,6 +130,7 @@ For more information, visit the relevant **repositories**:
 - Support for multi-layer EXR and PSD navigation
 - Integration with asset management tools (e.g., Bridge folder syncing)
 - Batch export or format conversion
+- Drag & drop multiple files/directories
 
 ---
 

@@ -25,6 +25,7 @@ public class SkiaOpenGlRenderer : IRenderer
     private readonly CenteredTextOverlay _centeredOverlay;
     private SamplingMode _samplingMode = SamplingMode.Cubic;
     private BackgroundMode _backgroundMode = BackgroundMode.Black;
+    private InfoMode _infoMode = InfoMode.Basic;
 
     private Composite? _composite;
     private SKPoint _offset = SKPoint.Empty;
@@ -108,7 +109,9 @@ public class SkiaOpenGlRenderer : IRenderer
     {
         var bounds = new DrawableBounds(_windowWidth, _windowHeight);
         var textColor = _backgroundMode == BackgroundMode.Black ? SKColors.White : SKColors.Black;
-        _imageInfoOverlay.Render(canvas, bounds, textColor, PrepareInfoLines());
+        
+        if(_infoMode != InfoMode.None)
+            _imageInfoOverlay.Render(canvas, bounds, textColor, PrepareInfoLines());
 
         if (_composite?.Image == null)
             _centeredOverlay.Render(canvas, bounds, textColor, "No image");
@@ -151,7 +154,7 @@ public class SkiaOpenGlRenderer : IRenderer
             $"[System]        Graphics API: OpenGL  |  Sampling: {_samplingMode.Description()}"
         };
 
-        if (_composite?.ExifInfo?.HasData() == true)
+        if (_infoMode == InfoMode.WithExif && _composite?.ExifInfo?.HasData() == true)
         {
             lines.AddRange(["", "", "", "[EXIF ↯]", ""]);
             var exifLines = _composite.ExifInfo.Value.ToLines();
@@ -174,6 +177,7 @@ public class SkiaOpenGlRenderer : IRenderer
     public void SetZoom(int zoomPercentage) => _zoomPercentage = zoomPercentage;
     public void ToggleSampling() => _samplingMode = (SamplingMode)(((int)_samplingMode + 1) % Enum.GetValues<SamplingMode>().Length);
     public void ToggleBackground() => _backgroundMode = (BackgroundMode)(((int)_backgroundMode + 1) % Enum.GetValues<BackgroundMode>().Length);
+    public void ToggleInfo() => _infoMode = (InfoMode)(((int)_infoMode + 1) % Enum.GetValues<InfoMode>().Length);
 
     public void Dispose()
     {

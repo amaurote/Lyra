@@ -24,7 +24,7 @@ public partial class SdlCore
             { Scancode.Left, PreviousImage },
             { Scancode.Home, FirstImage },
             { Scancode.End, LastImage },
-            // { Scancode.I, ToggleInfo },
+            { Scancode.I, ToggleInfo },
             { Scancode.B, ToggleBackground },
             { Scancode.F, ToggleFullscreen },
             { Scancode.Minus, ZoomOut },
@@ -110,6 +110,11 @@ public partial class SdlCore
     private void ToggleBackground()
     {
         _renderer.ToggleBackground();
+    }
+
+    private void ToggleInfo()
+    {
+        _renderer.ToggleInfo();
     }
 
     private void ToggleDisplayMode()
