@@ -87,7 +87,7 @@ exported from tools like **Blender**, **Quixel Bridge**, and other content creat
 | `9`            | Toggle sampling mode                         |
 | `F`            | Toggle fullscreen                            |
 | `B`            | Toggle background mode                       |
-| ~~`I`~~        | ~~Toggle image information overlay~~         |
+| `I`            | Toggle image information overlay             |
 | `Esc`          | Exit application                             |
 
 - **Drag & Drop:** Open a file or directory by dragging it into Lyra Viewer.
