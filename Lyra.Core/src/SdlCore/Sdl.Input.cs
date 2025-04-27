@@ -2,7 +2,6 @@ using Lyra.Common;
 using Lyra.Loader;
 using SkiaSharp;
 using static SDL3.SDL;
-using DisplayMode = Lyra.Common.Enum.DisplayMode;
 
 namespace Lyra.SdlCore;
 

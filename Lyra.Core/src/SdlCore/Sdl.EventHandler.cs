@@ -1,7 +1,6 @@
 using Lyra.Common;
 using static Lyra.Events.EventManager;
 using static SDL3.SDL;
-using DisplayMode = Lyra.Common.Enum.DisplayMode;
 
 namespace Lyra.SdlCore;
 

@@ -2,36 +2,49 @@ using System.ComponentModel;
 
 namespace Lyra.Imaging.Data;
 
-public struct ExifInfo
+public class ExifInfo
 {
-    public string Make;
-    public string Model;
-    public string Lens;
+    public string Make = string.Empty;
+    public string Model = string.Empty;
+    public string Lens = string.Empty;
 
     [EmptyLine]
     [Description("Exposure Time")]
-    public string ExposureTime;
+    public string ExposureTime = string.Empty;
 
     [Description("Apeture")]
-    public string FNumber;
+    public string FNumber = string.Empty;
 
     [Description("ISO")]
-    public string Iso;
+    public string Iso = string.Empty;
+    
+    [Description("Flash")]
+    public string Flash = string.Empty;
 
     [EmptyLine]
-    public string Taken;
+    public string Taken = string.Empty;
 
+    [EmptyLine]
+    [Description("ICC Profile")]
+    public string IccProfile = string.Empty;
+    [Description("Color Space")]
+    public string ColorSpace = string.Empty;
+    [Description("Bits Per Sample")]
+    public string ColorDepth = string.Empty;
+    [Description("Color Type")]
+    public string ColorType = string.Empty;
+    
     [EmptyLine]
     [Description("GPS Latitude")]
-    public string GpsLatitude;
+    public string GpsLatitude = string.Empty;
 
     [Description("GPS Longitude")]
-    public string GpsLongitude;
+    public string GpsLongitude = string.Empty;
 
     [EmptyLine]
-    public string Compression;
+    public string Compression = string.Empty;
 
-    public string Software;
+    public string Software = string.Empty;
 
     public bool HasData()
     {

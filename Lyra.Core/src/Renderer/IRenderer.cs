@@ -1,6 +1,6 @@
-using Lyra.Common.Enum;
 using Lyra.Events;
 using Lyra.Imaging.Data;
+using Lyra.SdlCore;
 using SkiaSharp;
 
 namespace Lyra.Renderer;

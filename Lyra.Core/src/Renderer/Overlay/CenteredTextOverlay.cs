@@ -1,9 +1,9 @@
-using Lyra.Common.Data;
 using Lyra.Events;
+using Lyra.SdlCore;
 using SkiaSharp;
 using static Lyra.Events.EventManager;
 
-namespace Lyra.Renderer.Overlay.Implementation;
+namespace Lyra.Renderer.Overlay;
 
 public class CenteredTextOverlay : IDisplayScaleAware, IOverlay<string>
 {

@@ -1,4 +1,4 @@
-namespace Lyra.Renderer;
+namespace Lyra.Renderer.Enum;
 
 public enum BackgroundMode
 {

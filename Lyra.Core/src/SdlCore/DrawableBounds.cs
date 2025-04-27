@@ -1,4 +1,4 @@
-namespace Lyra.Common.Data;
+namespace Lyra.SdlCore;
 
 public readonly struct DrawableBounds(int width, int height)
 {

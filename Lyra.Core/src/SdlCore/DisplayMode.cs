@@ -1,6 +1,6 @@
 using System.ComponentModel;
 
-namespace Lyra.Common.Enum;
+namespace Lyra.SdlCore;
 
 public enum DisplayMode
 {

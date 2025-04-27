@@ -4,7 +4,6 @@ using Lyra.Loader;
 using Lyra.Renderer;
 using SkiaSharp;
 using static SDL3.SDL;
-using DisplayMode = Lyra.Common.Enum.DisplayMode;
 using Imagin = Lyra.Imaging.Imaging;
 
 namespace Lyra.SdlCore;
@@ -20,8 +19,8 @@ public partial class SdlCore : IDisposable
     private int _zoomPercentage = 100;
     private DisplayMode _displayMode = DisplayMode.OriginalImageSize;
     
-    private const int PreloadDepth = 2;
-    private const int CleanupSafeRange = 3;
+    private const int PreloadDepth = 3;
+    private const int CleanupSafeRange = 4;
 
     public SdlCore(GpuBackend backend = GpuBackend.OpenGL)
     {

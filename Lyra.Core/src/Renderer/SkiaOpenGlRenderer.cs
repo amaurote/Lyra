@@ -1,13 +1,13 @@
-using Lyra.Common.Data;
 using Lyra.Common.Extensions;
 using Lyra.Imaging.Data;
 using Lyra.Loader;
+using Lyra.Renderer.Enum;
 using Lyra.Renderer.Overlay;
-using Lyra.Renderer.Overlay.Implementation;
+using Lyra.SdlCore;
 using SkiaSharp;
 using static Lyra.Events.EventManager;
 using static SDL3.SDL;
-using DisplayMode = Lyra.Common.Enum.DisplayMode;
+using DisplayMode = Lyra.SdlCore.DisplayMode;
 
 namespace Lyra.Renderer;
 
@@ -154,11 +154,14 @@ public class SkiaOpenGlRenderer : IRenderer
             $"[System]        Graphics API: OpenGL  |  Sampling: {_samplingMode.Description()}"
         };
 
-        if (_infoMode == InfoMode.WithExif && _composite?.ExifInfo?.HasData() == true)
+        if (_infoMode == InfoMode.WithExif)
         {
             lines.AddRange(["", "", "", "[EXIF ↯]", ""]);
-            var exifLines = _composite.ExifInfo.Value.ToLines();
-            lines.AddRange(exifLines);
+            if (_composite?.ExifInfo?.HasData() == true)
+            {
+                var exifLines = _composite.ExifInfo.ToLines();
+                lines.AddRange(exifLines);
+            }
         }
 
         return lines;
@@ -175,9 +178,12 @@ public class SkiaOpenGlRenderer : IRenderer
     public void SetOffset(SKPoint offset) => _offset = offset;
     public void SetDisplayMode(DisplayMode displayMode) => _displayMode = displayMode;
     public void SetZoom(int zoomPercentage) => _zoomPercentage = zoomPercentage;
-    public void ToggleSampling() => _samplingMode = (SamplingMode)(((int)_samplingMode + 1) % Enum.GetValues<SamplingMode>().Length);
-    public void ToggleBackground() => _backgroundMode = (BackgroundMode)(((int)_backgroundMode + 1) % Enum.GetValues<BackgroundMode>().Length);
-    public void ToggleInfo() => _infoMode = (InfoMode)(((int)_infoMode + 1) % Enum.GetValues<InfoMode>().Length);
+    public void ToggleSampling() 
+        => _samplingMode = (SamplingMode)(((int)_samplingMode + 1) % System.Enum.GetValues<SamplingMode>().Length);
+    public void ToggleBackground() 
+        => _backgroundMode = (BackgroundMode)(((int)_backgroundMode + 1) % System.Enum.GetValues<BackgroundMode>().Length);
+    public void ToggleInfo() 
+        => _infoMode = (InfoMode)(((int)_infoMode + 1) % System.Enum.GetValues<InfoMode>().Length);
 
     public void Dispose()
     {
