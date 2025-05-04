@@ -29,7 +29,7 @@ internal static class LoadTimeEstimator
         lock (list)
         {
             list.Add(loadTime);
-            Logger.Debug($"[LoadTimeEstimator] {key.Extension}: {sizeInBytes} bytes, {loadTime} ms.");
+            Logger.Debug($"[LoadTimeEstimator] Recorded load time: {key.Extension}, {sizeInBytes} bytes, {loadTime} ms.");
 
             if (list.Count > MaxSamplesPerBucket)
                 list.RemoveAt(0);

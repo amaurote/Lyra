@@ -37,14 +37,14 @@ internal static class NativeLibraryLoader
                 "libheif.dylib"
             },
             {
-                "EXR", RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "libexr.dll" :
-                RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "libexr.so" :
-                "libexr.dylib"
+                "EXR", RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "libexr_native.dll" :
+                RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "libexr_native.so" :
+                "libexr_native.dylib"
             },
             {
-                "HDR", RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "libhdr.dll" :
-                RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "libhdr.so" :
-                "libhdr.dylib"
+                "HDR", RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "libhdr_native.dll" :
+                RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "libhdr_native.so" :
+                "libhdr_native.dylib"
             }
         };
 
