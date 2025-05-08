@@ -3,21 +3,12 @@ using static Lyra.SdlCore.DimensionHelper;
 
 namespace Lyra.SdlCore;
 
-public class PanHelper
+public class PanHelper(IntPtr window, SKImage? image, int zoomPercentage)
 {
-    private readonly IntPtr _window;
-    private SKImage? _image;
-    private int _zoomPercentage;
+    private int _zoomPercentage = zoomPercentage;
     private SKPoint _lastMousePosition;
 
     public SKPoint CurrentOffset { get; set; } = SKPoint.Empty;
-
-    public PanHelper(IntPtr window, SKImage? image, int zoomPercentage)
-    {
-        _window = window;
-        _image = image;
-        _zoomPercentage = zoomPercentage;
-    }
 
     public void UpdateZoom(int zoomPercentage)
     {
@@ -74,13 +65,13 @@ public class PanHelper
     
     public SKPoint GetOffsetForZoomAtCursor(SKPoint mouse, int newZoom)
     {
-        if (_image == null || _image.Handle == IntPtr.Zero)
+        if (image == null || image.Handle == IntPtr.Zero)
             return CurrentOffset;
         
         var oldScale = _zoomPercentage / 100f;
         var newScale = newZoom / 100f;
 
-        var imgSize = new SKSize(_image.Width, _image.Height);
+        var imgSize = new SKSize(image.Width, image.Height);
         var imageDrawSizeOld = new SKSize(imgSize.Width * oldScale, imgSize.Height * oldScale);
         var imageDrawSizeNew = new SKSize(imgSize.Width * newScale, imgSize.Height * newScale);
 
@@ -110,13 +101,13 @@ public class PanHelper
     
     private (int scaledImageWidth, int scaledImageHeight, DrawableBounds bounds, float scale) GetScaledImageAndDrawableBounds()
     {
-        var bounds = GetDrawableSize(_window, out var scale);
+        var bounds = GetDrawableSize(window, out var scale);
 
-        if (_image == null || _image.Handle == IntPtr.Zero)
+        if (image == null || image.Handle == IntPtr.Zero)
             return (0, 0, bounds, scale);
 
-        var scaledWidth = (int)(_image.Width * (_zoomPercentage / 100f));
-        var scaledHeight = (int)(_image.Height * (_zoomPercentage / 100f));
+        var scaledWidth = (int)(image.Width * (_zoomPercentage / 100f));
+        var scaledHeight = (int)(image.Height * (_zoomPercentage / 100f));
         return (scaledWidth, scaledHeight, bounds, scale);
     }
 }

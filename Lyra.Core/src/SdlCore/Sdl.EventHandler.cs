@@ -101,9 +101,7 @@ public partial class SdlCore
         if (_currentDroppedPaths.Count == 1)
             DirectoryNavigator.SearchImages(_currentDroppedPaths[0]);
         else
-        {
             DirectoryNavigator.LoadCollection(_currentDroppedPaths);
-        }
 
         LoadImage();
         _currentDroppedPaths.Clear();
@@ -129,25 +127,19 @@ public partial class SdlCore
     private void OnMouseButtonDown(Event e)
     {
         if (e.Button.Button == ButtonLeft)
-        {
             StartPanning(e.Motion.X, e.Motion.Y);
-        }
     }
 
     private void OnMouseButtonUp(Event e)
     {
         if (e.Button.Button == ButtonLeft)
-        {
             StopPanning();
-        }
     }
 
     private void OnMouseMotion(Event e)
     {
         if (_isPanning)
-        {
             HandlePanning(e.Motion.X, e.Motion.Y);
-        }
     }
 
     private void OnMouseWheel(Event e)

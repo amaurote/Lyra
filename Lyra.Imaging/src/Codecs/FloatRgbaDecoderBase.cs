@@ -35,21 +35,15 @@ internal abstract class FloatRgbaDecoderBase : IImageDecoder
             {
                 var totalPixels = width * height;
                 var floatCount = totalPixels * 4;
-
-                var floatArray = new float[floatCount];
-                unsafe
-                {
-                    var srcSpan = new Span<float>((void*)ptr, floatCount);
-                    srcSpan.CopyTo(floatArray);
-                }
-
                 var info = new SKImageInfo(width, height, SKColorType.Rgba8888, SKAlphaType.Unpremul);
                 using var bitmap = new SKBitmap(info);
 
                 unsafe
                 {
+                    var floatSpan = new Span<float>((void*)ptr, floatCount);
                     var byteSpan = new Span<byte>((void*)bitmap.GetPixels(), width * height * 4);
-                    ConvertPixels(floatArray, byteSpan, width, height, out composite.IsGrayscale);
+
+                    ConvertPixels(floatSpan, byteSpan, width, height, out composite.IsGrayscale);
                 }
 
                 composite.Image = SKImage.FromBitmap(bitmap);
@@ -66,23 +60,23 @@ internal abstract class FloatRgbaDecoderBase : IImageDecoder
         });
     }
 
-    private void ConvertPixels(float[] floatArray, Span<byte> byteSpan, int width, int height, out bool isGrayscale)
+    private void ConvertPixels(Span<float> floatSpan, Span<byte> byteSpan, int width, int height, out bool isGrayscale)
     {
         var totalPixels = width * height;
 
         isGrayscale = true;
         for (var i = 0; i < totalPixels && isGrayscale; i++)
         {
-            if (floatArray[i * 4 + 1] != 0f || floatArray[i * 4 + 2] != 0f)
+            if (floatSpan[i * 4 + 1] != 0f || floatSpan[i * 4 + 2] != 0f)
                 isGrayscale = false;
         }
 
         for (var i = 0; i < totalPixels; i++)
         {
-            var r = floatArray[i * 4 + 0];
-            var g = isGrayscale ? r : floatArray[i * 4 + 1];
-            var b = isGrayscale ? r : floatArray[i * 4 + 2];
-            var a = floatArray[i * 4 + 3];
+            var r = floatSpan[i * 4 + 0];
+            var g = isGrayscale ? r : floatSpan[i * 4 + 1];
+            var b = isGrayscale ? r : floatSpan[i * 4 + 2];
+            var a = floatSpan[i * 4 + 3];
 
             var idx = i * 4;
             byteSpan[idx + 0] = ToneMap(r);
