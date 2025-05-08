@@ -1,7 +1,10 @@
 #include <OpenEXR/ImfArray.h>
 #include <OpenEXR/ImfRgba.h>
 #include <OpenEXR/ImfRgbaFile.h>
+#include <unordered_set>
+#include <mutex>
 #include <cstring>
+#include <cstdio>
 
 #ifdef _WIN32
 #define EXR_API __declspec(dllexport)
@@ -9,7 +12,22 @@
 #define EXR_API __attribute__((visibility("default")))
 #endif
 
+#ifdef __clang__
+#define THREAD_LOCAL __thread
+#else
+#define THREAD_LOCAL thread_local
+#endif
+
+static THREAD_LOCAL char last_exr_error[512] = "";
+static std::unordered_set<void*> exr_allocated_ptrs;
+static std::mutex exr_alloc_mutex;
+
 extern "C" {
+
+EXR_API const char* get_last_exr_error() {
+    return last_exr_error;
+}
+
 EXR_API bool load_exr_rgba(const char *path, float **out_pixels, int *width, int *height) {
     try {
         Imf::RgbaInputFile file(path);
@@ -25,7 +43,19 @@ EXR_API bool load_exr_rgba(const char *path, float **out_pixels, int *width, int
         file.setFrameBuffer(&pixels[0][0] - dw.min.x - dw.min.y * w, 1, w);
         file.readPixels(dw.min.y, dw.max.y);
 
-        *out_pixels = new float[w * h * 4];
+        *out_pixels = (float*) malloc(sizeof(float) * w * h * 4);
+        if (!*out_pixels) {
+            snprintf(last_exr_error, sizeof(last_exr_error), "Failed to allocate memory for EXR output buffer.");
+            return false;
+        }
+
+        {
+            std::lock_guard<std::mutex> lock(exr_alloc_mutex);
+            exr_allocated_ptrs.insert(*out_pixels);
+        }
+        printf("[C++] Allocated %zu bytes at %p\n", sizeof(float) * w * h * 4, *out_pixels);
+        fflush(stdout);
+
         for (int y = 0; y < h; ++y) {
             for (int x = 0; x < w; ++x) {
                 int i = y * w + x;
@@ -36,13 +66,36 @@ EXR_API bool load_exr_rgba(const char *path, float **out_pixels, int *width, int
             }
         }
 
+        last_exr_error[0] = '\0';
         return true;
+    } catch (const std::exception& ex) {
+        snprintf(last_exr_error, sizeof(last_exr_error), "EXR exception: %s", ex.what());
     } catch (...) {
-        *out_pixels = nullptr;
-        *width = *height = 0;
-        return false;
+        snprintf(last_exr_error, sizeof(last_exr_error), "Unknown EXR exception.");
     }
+    *out_pixels = nullptr;
+    *width = *height = 0;
+    return false;
 }
 
-EXR_API void free_exr_pixels(float *ptr) { delete[] ptr; }
+EXR_API void free_exr_pixels(float *ptr) {
+    if (ptr == nullptr) {
+        printf("[C++] Warning: free_exr_pixels called with null pointer!\n");
+        fflush(stdout);
+        return;
+    }
+
+    {
+        std::lock_guard<std::mutex> lock(exr_alloc_mutex);
+        if (exr_allocated_ptrs.find(ptr) == exr_allocated_ptrs.end()) {
+            printf("[C++] Warning: Attempting to free unknown or already freed pointer %p!\n", ptr);
+            fflush(stdout);
+        } else {
+            exr_allocated_ptrs.erase(ptr);
+            printf("[C++] Freeing pointer %p\n", ptr);
+            fflush(stdout);
+            free(ptr);
+        }
+    }
+}
 }

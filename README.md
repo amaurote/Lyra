@@ -77,18 +77,18 @@ exported from tools like **Blender**, **Quixel Bridge**, and other content creat
 
 ## **Keyboard Shortcuts & Controls**
 
-| Key            | Action                                       |
-|----------------|----------------------------------------------|
-| `←` / `→`      | Previous / Next image                        |
-| `Home` / `End` | First / Last image                           |
-| `+` / `-`      | Zoom in / Zoom out                           |
-| `Mouse Wheel`  | Zoom at cursor position                      |
-| `0`            | Toggle **Fit to Screen** / **Original Size** |
-| `9`            | Toggle sampling mode                         |
-| `F`            | Toggle fullscreen                            |
-| `B`            | Toggle background mode                       |
-| `I`            | Toggle image information overlay             |
-| `Esc`          | Exit application                             |
+| Key                               | Action                                       |
+|-----------------------------------|----------------------------------------------|
+| `←` / `→`                         | Previous / Next image                        |
+| `Home` / `End` <br/>`⌘ ←` / `⌘ →` | First / Last image                           |
+| `+` / `-`                         | Zoom in / Zoom out                           |
+| `Mouse Wheel`                     | Zoom at cursor position                      |
+| `0`                               | Toggle **Fit to Screen** / **Original Size** |
+| `9`                               | Toggle sampling mode                         |
+| `F`                               | Toggle fullscreen                            |
+| `B`                               | Toggle background mode                       |
+| `I`                               | Toggle image information overlay             |
+| `Esc`                             | Exit application                             |
 
 - **Drag & Drop:** Open a file or directory by dragging it into Lyra Viewer.
 
@@ -124,13 +124,10 @@ For more information, visit the relevant **repositories**:
 ## Future Ideas
 
 - Channel preview (R, G, B, A, RGB)
-- Color space indication (sRGB / linear)
-- Display metadata (EXIF, bit depth, resolution, ICC profile)
 - Histogram or levels display for HDR/EXR workflows
 - Support for multi-layer EXR and PSD navigation
 - Integration with asset management tools (e.g., Bridge folder syncing)
-- Batch export or format conversion
-- Drag & drop multiple files/directories
+- Image export or format conversion
 
 ---
 

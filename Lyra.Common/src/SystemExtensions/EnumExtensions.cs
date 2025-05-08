@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using System.Reflection;
 
-namespace Lyra.Common.Extensions;
+namespace Lyra.Common.SystemExtensions;
 
 public static class EnumExtensions
 {

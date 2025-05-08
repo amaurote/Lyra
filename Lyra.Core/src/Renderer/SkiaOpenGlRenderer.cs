@@ -1,4 +1,4 @@
-using Lyra.Common.Extensions;
+using Lyra.Common.SystemExtensions;
 using Lyra.Imaging.Data;
 using Lyra.Loader;
 using Lyra.Renderer.Enum;
@@ -150,7 +150,9 @@ public class SkiaOpenGlRenderer : IRenderer
         var lines = new List<string>
         {
             $"[File]          {DirectoryNavigator.GetIndex().index}/{DirectoryNavigator.GetIndex().count}  |  {fileInfo.Name}  |  {fileSize}",
-            $"[Image]         {_composite?.Image?.Width ?? 0}x{_composite?.Image?.Height ?? 0}  |  Zoom: {_zoomPercentage}%  |  Display Mode: {_displayMode.Description()}",
+            $"[Image]         {_composite.ImageFormatType.Description()}  |  {_composite.Image?.Width ?? 0}x{_composite.Image?.Height ?? 0}"
+            + (_composite.IsGrayscale ? "  |  Greyscale" : ""),
+            $"[Displaying]    Zoom: {_zoomPercentage}%  |  Display Mode: {_displayMode.Description()}",
             $"[System]        Graphics API: OpenGL  |  Sampling: {_samplingMode.Description()}"
         };
 

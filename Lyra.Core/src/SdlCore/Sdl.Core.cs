@@ -14,11 +14,11 @@ public partial class SdlCore : IDisposable
     private IRenderer _renderer = null!;
     private readonly GpuBackend _backend;
     private bool _running = true;
-    
+
     private Composite? _composite;
     private int _zoomPercentage = 100;
     private DisplayMode _displayMode = DisplayMode.OriginalImageSize;
-    
+
     private const int PreloadDepth = 3;
     private const int CleanupSafeRange = 4;
 
@@ -57,16 +57,21 @@ public partial class SdlCore : IDisposable
 
     private void LoadImage()
     {
+        var keepPaths = DirectoryNavigator.GetRange(CleanupSafeRange);
+        Imagin.Cleanup(keepPaths);
+
         var currentPath = DirectoryNavigator.GetCurrent();
         if (currentPath == null)
+        {
             _composite = null;
+            _panHelper = null;
+        }
         else
         {
             _composite = Imagin.GetImage(currentPath);
-            var preloadPaths = DirectoryNavigator.GetAdjacent(PreloadDepth);
-            var keepPaths = DirectoryNavigator.GetAdjacent(CleanupSafeRange);
-            Imagin.Cleanup(keepPaths);
+            var preloadPaths = DirectoryNavigator.GetRange(PreloadDepth);
             Imagin.Preload(preloadPaths);
+            _panHelper = new PanHelper(_window, _composite.Image, _zoomPercentage);
         }
 
         _renderer.SetComposite(_composite);
@@ -88,19 +93,25 @@ public partial class SdlCore : IDisposable
 
     private void ExitApplication()
     {
+        Logger.Info("[Core] Exiting application...");
         _running = false;
-        Imagin.SaveAndDispose();
+        _renderer.SetComposite(null);
     }
 
     public void Dispose()
     {
         Logger.Info("[Core] Disposing...");
+
+        _renderer.Dispose();
+        Imagin.SaveAndDispose();
         _composite?.Dispose();
 
         if (_window != IntPtr.Zero)
             DestroyWindow(_window);
 
         Quit();
+
+        Logger.Info("[Core] Dispose finished.");
     }
 
     public enum GpuBackend

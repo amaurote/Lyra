@@ -1,6 +1,6 @@
 using LibHeifSharp;
 using Lyra.Common;
-using Lyra.Common.Extensions;
+using Lyra.Common.SystemExtensions;
 using Lyra.Imaging.Data;
 using Lyra.Imaging.Pipeline;
 using MetadataExtractor;
@@ -11,18 +11,13 @@ namespace Lyra.Imaging.Codecs;
 
 internal class HeifDecoder : IImageDecoder
 {
-    private static readonly string[] Extensions = [".heic", ".heif", ".avif"];
+    public bool CanDecode(ImageFormatType format) => format == ImageFormatType.Heif;
 
-    public bool CanDecode(string extension)
+    public async Task<Composite> DecodeAsync(Composite composite)
     {
-        return Extensions.Contains(extension.ToLower());
-    }
-
-    public async Task<Composite> DecodeAsync(string path)
-    {
+        var path = composite.FileInfo.FullName;
         Logger.Debug($"[HeifDecoder] [Thread: {CurrentThread.GetNameOrId()}] Decoding: {path}");
 
-        var composite = new Composite(new FileInfo(path));
         return await Task.Run(() =>
         {
             try

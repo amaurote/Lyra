@@ -1,14 +1,25 @@
+using System.Runtime.InteropServices;
+using Lyra.Common;
 using Lyra.Imaging.Interop;
 
 namespace Lyra.Imaging.Codecs;
 
 internal class HdrDecoder : FloatRgbaDecoderBase
 {
-    public override bool CanDecode(string extension)
-        => extension.Equals(".hdr", StringComparison.OrdinalIgnoreCase);
+    public override bool CanDecode(ImageFormatType format) => format == ImageFormatType.Hdr;
 
     protected override bool LoadPixels(string path, out IntPtr ptr, out int width, out int height)
-        => HdrNative.load_hdr_rgba(path, out ptr, out width, out height);
+    {
+        var result = HdrNative.load_hdr_rgba(path, out ptr, out width, out height);
+        if (!result)
+        {
+            var errorPtr = HdrNative.get_last_hdr_error();
+            var error = Marshal.PtrToStringAnsi(errorPtr) ?? "<null>";
+            Logger.Error($"[HdrDecoder] Native error: {error}");
+        }
+
+        return result;
+    }
 
     protected override void FreePixels(IntPtr ptr)
         => HdrNative.free_hdr_pixels(ptr);

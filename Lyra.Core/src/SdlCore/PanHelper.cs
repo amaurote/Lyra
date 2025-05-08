@@ -3,36 +3,40 @@ using static Lyra.SdlCore.DimensionHelper;
 
 namespace Lyra.SdlCore;
 
-public static class PanHelper
+public class PanHelper
 {
-    private static SKPoint _lastMousePosition;
-    public static SKPoint CurrentOffset { get; set; } = SKPoint.Empty;
+    private readonly IntPtr _window;
+    private SKImage? _image;
+    private int _zoomPercentage;
+    private SKPoint _lastMousePosition;
 
-    // Required shared context
-    private static IntPtr _window;
-    private static SKImage? _image;
-    private static int _zoomPercentage;
+    public SKPoint CurrentOffset { get; set; } = SKPoint.Empty;
 
-    public static void Update(IntPtr window, SKImage? image, int zoomPercentage)
+    public PanHelper(IntPtr window, SKImage? image, int zoomPercentage)
     {
         _window = window;
         _image = image;
         _zoomPercentage = zoomPercentage;
     }
 
-    public static void Start(float rawX, float rawY)
+    public void UpdateZoom(int zoomPercentage)
+    {
+        _zoomPercentage = zoomPercentage;
+    }
+
+    public void Start(float rawX, float rawY)
     {
         var (_, _, _, scale) = GetScaledImageAndDrawableBounds();
         _lastMousePosition = new SKPoint(rawX * scale, rawY * scale);
     }
 
-    public static bool CanPan()
+    public bool CanPan()
     {
         var (imgW, imgH, bounds, _) = GetScaledImageAndDrawableBounds();
         return imgW > bounds.Width || imgH > bounds.Height;
     }
 
-    public static void Move(float rawX, float rawY)
+    public void Move(float rawX, float rawY)
     {
         var (_, _, bounds, scale) = GetScaledImageAndDrawableBounds();
 
@@ -44,12 +48,12 @@ public static class PanHelper
         Clamp();
     }
 
-    public static void Reset()
+    public void Reset()
     {
         CurrentOffset = SKPoint.Empty;
     }
 
-    public static void Clamp()
+    public void Clamp()
     {
         var (imgW, imgH, bounds, _) = GetScaledImageAndDrawableBounds();
 
@@ -68,11 +72,11 @@ public static class PanHelper
         );
     }
     
-    public static SKPoint GetOffsetForZoomAtCursor(SKPoint mouse, int newZoom)
+    public SKPoint GetOffsetForZoomAtCursor(SKPoint mouse, int newZoom)
     {
-        if (_image == null)
+        if (_image == null || _image.Handle == IntPtr.Zero)
             return CurrentOffset;
-
+        
         var oldScale = _zoomPercentage / 100f;
         var newScale = newZoom / 100f;
 
@@ -104,10 +108,14 @@ public static class PanHelper
         );
     }
     
-    private static (int scaledImageWidth, int scaledImageHeight, DrawableBounds bounds, float scale) GetScaledImageAndDrawableBounds()
+    private (int scaledImageWidth, int scaledImageHeight, DrawableBounds bounds, float scale) GetScaledImageAndDrawableBounds()
     {
         var bounds = GetDrawableSize(_window, out var scale);
-        var scaledWidth = (int)(_image!.Width * (_zoomPercentage / 100f));
+
+        if (_image == null || _image.Handle == IntPtr.Zero)
+            return (0, 0, bounds, scale);
+
+        var scaledWidth = (int)(_image.Width * (_zoomPercentage / 100f));
         var scaledHeight = (int)(_image.Height * (_zoomPercentage / 100f));
         return (scaledWidth, scaledHeight, bounds, scale);
     }

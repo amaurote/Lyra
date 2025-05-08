@@ -4,20 +4,6 @@ namespace Lyra.Loader;
 
 public static class DirectoryNavigator
 {
-    private static readonly HashSet<string> ImageExtensions = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ".bmp",
-        ".exr", ".hdr",
-        ".heic", ".heif", ".avif",
-        ".ico",
-        ".jfif",
-        ".jpeg", ".jpg",
-        ".png",
-        ".tga",
-        ".tiff", ".tif",
-        ".webp"
-    };
-
     private static string _currentDirectory = string.Empty;
     private static string? _anchorFile;
 
@@ -40,26 +26,25 @@ public static class DirectoryNavigator
             _currentDirectory = Path.GetDirectoryName(path) ?? throw new ArgumentException("[DirectoryNavigator] Invalid path!", nameof(path));
         }
 
-        SearchImagesInternal();
+        var files = FilePathProcessor.ProcessImagePaths([_currentDirectory]);
+        SetImageList(files, _anchorFile);
+        Logger.Info($"[DirectoryNavigator] {_imageList.Count} images in directory.");
     }
 
-    private static void SearchImagesInternal()
+    public static void LoadCollection(List<string> paths)
     {
-        Logger.Info($"[DirectoryNavigator] Searching inside: {_currentDirectory}");
+        _anchorFile = null;
+        var files = FilePathProcessor.ProcessImagePaths(paths);
+        SetImageList(files, _anchorFile);
+        Logger.Info($"[DirectoryNavigator] {_imageList.Count} files in collection.");
+    }
 
-        _imageList = Directory.GetFiles(_currentDirectory)
-            .Where(file => ImageExtensions.Contains(Path.GetExtension(file)) || (_anchorFile != null && file == _anchorFile))
-            .Distinct()
-            .OrderBy(Path.GetFileName)
-            .ToList();
-
-        _currentIndex = (_anchorFile != null)
-            ? _imageList.IndexOf(_anchorFile)
-            : (_imageList.Count > 0)
-                ? 0
-                : -1;
-
-        Logger.Info($"[DirectoryNavigator] Found {_imageList.Count} images.");
+    private static void SetImageList(List<string> files, string? anchorFile)
+    {
+        _imageList = files;
+        _currentIndex = (anchorFile != null)
+            ? _imageList.IndexOf(anchorFile)
+            : (_imageList.Count > 0 ? 0 : -1);
     }
 
     public static string? GetCurrent()
@@ -114,11 +99,24 @@ public static class DirectoryNavigator
         return _imageList.Count > 0 && _currentIndex > 0;
     }
 
-    public static string[] GetAdjacent(int depth)
+    /// <summary>
+    /// Returns a slice of image file paths centered on the current image,
+    /// including the current image and up to <paramref name="depth"/> images
+    /// before and after it in the collection.
+    /// </summary>
+    /// <param name="depth">
+    /// The number of images to include before and after the current index.
+    /// For example, a depth of 2 will return up to 5 items: two before, the current, and two after.
+    /// </param>
+    /// <returns>
+    /// An array of image file paths representing the window around the current image.
+    /// If the collection is empty or no current index is set, returns an empty array.
+    /// </returns>
+    public static string[] GetRange(int depth)
     {
         List<string> paths = [];
 
-        if (depth < 1 || _imageList.Count == 0)
+        if (depth < 0 || _imageList.Count == 0 || _currentIndex < 0)
             return paths.ToArray();
 
         var start = Math.Max(0, _currentIndex - depth);
@@ -126,8 +124,7 @@ public static class DirectoryNavigator
 
         for (var i = start; i <= end; i++)
         {
-            if (i != _currentIndex)
-                paths.Add(_imageList[i]);
+            paths.Add(_imageList[i]);
         }
 
         return paths.ToArray();

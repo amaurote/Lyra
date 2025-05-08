@@ -9,4 +9,7 @@ internal static class ExrNative
 
     [DllImport("libexr", CallingConvention = CallingConvention.Cdecl)]
     public static extern void free_exr_pixels(IntPtr ptr);
+
+    [DllImport("libexr", CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr get_last_exr_error();
 }

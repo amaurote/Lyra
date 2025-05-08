@@ -1,4 +1,6 @@
+using System.Runtime.InteropServices;
 using Lyra.Common;
+using Lyra.Loader;
 using static Lyra.Events.EventManager;
 using static SDL3.SDL;
 
@@ -6,15 +8,19 @@ namespace Lyra.SdlCore;
 
 public partial class SdlCore
 {
+    private readonly List<string> _currentDroppedPaths = [];
+    private bool _collectingDrop = false; // TODO
+
     private void HandleEvents()
     {
         while (PollEvent(out var e))
         {
             switch ((EventType)e.Type)
             {
-                case EventType.KeyDown
-                    when !e.Key.Repeat && _scanActions.TryGetValue(e.Key.Scancode, out var scanAction):
-                    scanAction.Invoke();
+                case EventType.KeyDown:
+                    if (!e.Key.Repeat)
+                        HandleScancode(e.Key.Scancode, e.Key.Mod);
+
                     break;
 
                 case EventType.MouseButtonDown:
@@ -34,15 +40,15 @@ public partial class SdlCore
                     break;
 
                 case EventType.DropBegin:
-                    Logger.Info("[EventHandler] File drop started.");
+                    OnDropBegin();
                     break;
 
                 case EventType.DropFile:
-                    // OnDropFile(e); // TODO
+                    OnDropFile(e);
                     break;
 
                 case EventType.DropComplete:
-                    Logger.Info("[EventHandler] File drop completed.");
+                    OnDropComplete();
                     break;
 
                 case EventType.WindowResized:
@@ -67,6 +73,40 @@ public partial class SdlCore
                     break;
             }
         }
+    }
+
+    private void OnDropBegin()
+    {
+        Logger.Info("[EventHandler] File drop started.");
+        _currentDroppedPaths.Clear();
+        _collectingDrop = true;
+    }
+
+    private void OnDropFile(Event e)
+    {
+        var droppedFilePtr = e.Drop.Data;
+        var droppedFilePath = Marshal.PtrToStringUTF8(droppedFilePtr);
+        if (droppedFilePath != null)
+            _currentDroppedPaths.Add(droppedFilePath);
+    }
+
+    private void OnDropComplete()
+    {
+        Logger.Info($"[EventHandler] File drop completed. Paths count: {_currentDroppedPaths.Count}");
+        _collectingDrop = false;
+
+        if (_currentDroppedPaths.Count == 0)
+            return;
+
+        if (_currentDroppedPaths.Count == 1)
+            DirectoryNavigator.SearchImages(_currentDroppedPaths[0]);
+        else
+        {
+            DirectoryNavigator.LoadCollection(_currentDroppedPaths);
+        }
+
+        LoadImage();
+        _currentDroppedPaths.Clear();
     }
 
     private void OnWindowResized()
@@ -109,7 +149,7 @@ public partial class SdlCore
             HandlePanning(e.Motion.X, e.Motion.Y);
         }
     }
-    
+
     private void OnMouseWheel(Event e)
     {
         GetMouseState(out var mouseX, out var mouseY);

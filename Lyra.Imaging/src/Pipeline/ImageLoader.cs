@@ -22,7 +22,8 @@ internal class ImageLoader
 
     public void PreloadAdjacent(string[] paths)
     {
-        foreach (var path in paths.Where(path => !_images.ContainsKey(path)))
+        foreach (var path in paths
+                     .Where(path => !_images.ContainsKey(path) && !ImageFormat.IsPreloadDisabled(Path.GetExtension(path))))
         {
             _images[path] = _preloadTaskFactory.StartNew(() => LoadImageAsync(path)).Unwrap();
         }
@@ -30,15 +31,18 @@ internal class ImageLoader
 
     private async Task<Composite> LoadImageAsync(string path)
     {
+        var composite = new Composite(new FileInfo(path));
+        composite.ImageFormatType = ImageFormat.GetImageFormat(composite.FileInfo.Extension);
+        
         try
         {
             var stopwatch = Stopwatch.StartNew();
-
-            var decoder = DecoderManager.GetDecoder(path);
-            var composite = await decoder.DecodeAsync(path);
-
+            
+            var decoder = DecoderManager.GetDecoder(composite.ImageFormatType);
+            composite = await decoder.DecodeAsync(composite);
+            
             stopwatch.Stop();
-
+            
             if (composite.Image != null)
                 LoadTimeEstimator.RecordLoadTime(composite.FileInfo.Extension, composite.FileInfo.Length, stopwatch.Elapsed.TotalMilliseconds);
 
@@ -85,7 +89,8 @@ internal class ImageLoader
                 if (compositeTask.IsCompletedSuccessfully)
                 {
                     var composite = compositeTask.Result;
-                    composite.Dispose();
+                    if (composite != _currentImage)
+                        composite.Dispose();
                 }
                 else
                 {

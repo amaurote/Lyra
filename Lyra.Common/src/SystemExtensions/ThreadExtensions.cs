@@ -1,4 +1,4 @@
-namespace Lyra.Common.Extensions;
+namespace Lyra.Common.SystemExtensions;
 
 public static class ThreadExtensions
 {

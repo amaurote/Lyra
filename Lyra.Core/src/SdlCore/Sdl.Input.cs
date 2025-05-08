@@ -9,6 +9,8 @@ public partial class SdlCore
 {
     private Dictionary<Scancode, Action> _scanActions = null!;
 
+    private PanHelper? _panHelper;
+
     private bool _isFullscreen;
     private bool _isPanning;
 
@@ -31,6 +33,24 @@ public partial class SdlCore
             { Scancode.Alpha0, ToggleDisplayMode },
             { Scancode.Alpha9, ToggleSampling }
         };
+    }
+
+    private void HandleScancode(Scancode scancode, Keymod mods)
+    {
+        if ((mods & Keymod.Ctrl) != 0 || (mods & Keymod.GUI) != 0)
+            switch (scancode)
+            {
+                case Scancode.Left:
+                    FirstImage();
+                    return;
+                case Scancode.Right:
+                    LastImage();
+                    return;
+            }
+        else if (_scanActions.TryGetValue(scancode, out var scanAction))
+        {
+            scanAction.Invoke();
+        }
     }
 
     private void NextImage()
@@ -118,7 +138,7 @@ public partial class SdlCore
 
     private void ToggleDisplayMode()
     {
-        if (_composite == null)
+        if (_composite == null || _panHelper == null)
             return;
 
         if (_displayMode == DisplayMode.Free)
@@ -136,8 +156,10 @@ public partial class SdlCore
         _renderer.SetDisplayMode(_displayMode);
         _renderer.SetZoom(_zoomPercentage);
 
-        PanHelper.Update(_window, _composite.Image, _zoomPercentage);
-        ClampOrCenterOffset();
+        _panHelper.UpdateZoom(_zoomPercentage);
+        _panHelper.CurrentOffset = SKPoint.Empty; // reset offset on mode toggle
+        _panHelper.Clamp();
+        _renderer.SetOffset(_panHelper.CurrentOffset);
     }
 
     private void ZoomIn() => ApplyZoom(_zoomPercentage + ZoomStep);
@@ -145,7 +167,7 @@ public partial class SdlCore
 
     private void ApplyZoom(int newZoom)
     {
-        if (_composite == null)
+        if (_composite == null || _panHelper == null)
             return;
 
         _zoomPercentage = Math.Clamp(newZoom, 10, 1000);
@@ -154,16 +176,17 @@ public partial class SdlCore
         _renderer.SetDisplayMode(_displayMode);
         _renderer.SetZoom(_zoomPercentage);
 
-        PanHelper.Update(_window, _composite.Image, _zoomPercentage);
+        _panHelper.UpdateZoom(_zoomPercentage);
         ClampOrCenterOffset();
     }
 
     private void ZoomAtPoint(float mouseX, float mouseY, float direction)
     {
-        if (_composite == null)
+        if (_composite == null || _panHelper == null)
             return;
 
-        var normalizedDirection = (direction > 0) ? 1 : -1;
+        _panHelper.UpdateZoom(_zoomPercentage);
+        var normalizedDirection = direction > 0 ? 1 : -1;
 
         // Get drawable size and scale (HiDPI-aware)
         DimensionHelper.GetDrawableSize(_window, out var scale);
@@ -171,12 +194,11 @@ public partial class SdlCore
 
         // Calculate new zoom
         var oldZoom = _zoomPercentage;
-        var newZoom = Math.Clamp(oldZoom + (normalizedDirection * ZoomStep), 10, 1000);
+        var newZoom = Math.Clamp(oldZoom + normalizedDirection * ZoomStep, 10, 1000);
         if (newZoom == oldZoom)
             return;
 
-        // Calculate new offset
-        var newOffset = PanHelper.GetOffsetForZoomAtCursor(mouse, newZoom);
+        var newOffset = _panHelper.GetOffsetForZoomAtCursor(mouse, newZoom);
 
         // Apply everything
         _zoomPercentage = newZoom;
@@ -185,10 +207,10 @@ public partial class SdlCore
         _renderer.SetDisplayMode(_displayMode);
         _renderer.SetZoom(_zoomPercentage);
 
-        PanHelper.Update(_window, _composite.Image, _zoomPercentage);
-        PanHelper.CurrentOffset = newOffset;
-        PanHelper.Clamp();
-        _renderer.SetOffset(PanHelper.CurrentOffset);
+        _panHelper.UpdateZoom(_zoomPercentage);
+        _panHelper.CurrentOffset = newOffset;
+        _panHelper.Clamp();
+        _renderer.SetOffset(_panHelper.CurrentOffset);
     }
 
     private void UpdateFitToScreen()
@@ -204,14 +226,13 @@ public partial class SdlCore
 
     private void StartPanning(float x, float y)
     {
-        if (_composite?.Image == null)
+        if (_composite?.Image == null || _panHelper == null)
             return;
 
-        PanHelper.Update(_window, _composite.Image, _zoomPercentage);
-        if (PanHelper.CanPan())
+        if (_panHelper.CanPan())
         {
             _isPanning = true;
-            PanHelper.Start(x, y);
+            _panHelper.Start(x, y);
         }
     }
 
@@ -222,16 +243,19 @@ public partial class SdlCore
 
     private void HandlePanning(float x, float y)
     {
-        if (_composite == null || !_isPanning)
+        if (_composite == null || !_isPanning || _panHelper == null)
             return;
 
-        PanHelper.Move(x, y);
-        _renderer.SetOffset(PanHelper.CurrentOffset);
+        _panHelper.Move(x, y);
+        _renderer.SetOffset(_panHelper.CurrentOffset);
     }
 
     private void ClampOrCenterOffset()
     {
-        PanHelper.Clamp();
-        _renderer.SetOffset(PanHelper.CurrentOffset);
+        if (_panHelper == null)
+            return;
+
+        _panHelper.Clamp();
+        _renderer.SetOffset(_panHelper.CurrentOffset);
     }
 }

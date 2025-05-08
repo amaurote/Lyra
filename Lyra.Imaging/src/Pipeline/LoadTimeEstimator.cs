@@ -8,7 +8,7 @@ namespace Lyra.Imaging.Pipeline;
 internal static class LoadTimeEstimator
 {
     private static readonly string TimeFilePath = Path.Combine(LyraDataDirectory.GetDataDirectory(), "load_time_data.yaml");
-    private static readonly ConcurrentDictionary<(string Extension, int SizeBucket), List<double>> LoadTimeData = new();
+    private static readonly ConcurrentDictionary<(string Format, int SizeBucket), List<double>> LoadTimeData = new();
 
     private const int UnsavedChangesThreshold = 5;
     private const int MaxSamplesPerBucket = 20;
@@ -29,7 +29,7 @@ internal static class LoadTimeEstimator
         lock (list)
         {
             list.Add(loadTime);
-            Logger.Debug($"[LoadTimeEstimator] Recorded load time: {key.Extension}, {sizeInBytes} bytes, {loadTime} ms.");
+            Logger.Debug($"[LoadTimeEstimator] Recorded load time: {key.Format}, {sizeInBytes} bytes, {loadTime} ms.");
 
             if (list.Count > MaxSamplesPerBucket)
                 list.RemoveAt(0);
@@ -57,7 +57,7 @@ internal static class LoadTimeEstimator
 
         // No exact match: Find closest available bucket
         var availableBuckets = LoadTimeData.Keys
-            .Where(k => k.Extension.Equals(key.Extension))
+            .Where(k => k.Format.Equals(key.Format))
             .Select(k => k.SizeBucket)
             .OrderBy(b => Math.Abs(b - key.SizeBucket))
             .ToList();
@@ -67,7 +67,7 @@ internal static class LoadTimeEstimator
 
         // Interpolate between the closest known buckets
         var closestBucket = availableBuckets.First();
-        var fallbackKey = (key.Extension, closestBucket);
+        var fallbackKey = (Extension: key.Format, closestBucket);
 
         if (LoadTimeData.TryGetValue(fallbackKey, out var fallbackTimes))
             lock (fallbackTimes)
@@ -81,7 +81,7 @@ internal static class LoadTimeEstimator
         try
         {
             var snapshot = LoadTimeData.ToDictionary(
-                entry => $"{entry.Key.Extension}_{entry.Key.SizeBucket}",
+                entry => $"{entry.Key.Format}_{entry.Key.SizeBucket}",
                 entry => entry.Value.ToList()
             );
 
@@ -142,14 +142,14 @@ internal static class LoadTimeEstimator
         return Math.Max(bucket, 1); // Ensure minimum bucket of 1
     }
 
-    private static bool TryGetKey(string extension, long sizeInBytes, out (string Extension, int SizeBucket) key)
+    private static bool TryGetKey(string extension, long sizeInBytes, out (string Format, int SizeBucket) key)
     {
         key = default;
-        var ext = ExtensionToFormat(extension);
-        if (ext == null)
+        var formatType = ImageFormat.GetImageFormat(extension);
+        if (formatType == ImageFormatType.Unknown)
             return false;
 
-        key = (ext, GetSizeBucket(sizeInBytes));
+        key = (formatType.ToString().ToUpper(), GetSizeBucket(sizeInBytes));
         return true;
     }
 
@@ -165,22 +165,5 @@ internal static class LoadTimeEstimator
         ext = null!;
         bucket = 0;
         return false;
-    }
-
-    private static string? ExtensionToFormat(string extension)
-    {
-        if (string.IsNullOrEmpty(extension))
-            return null;
-
-        return extension.ToLower() switch
-        {
-            ".jpg" => "JPEG",
-            ".jpeg" => "JPEG",
-            ".heic" => "HEIF",
-            ".heif" => "HEIF",
-            ".tif" => "TIFF",
-            ".tiff" => "TIFF",
-            _ => extension.Replace(".", string.Empty).ToUpper()
-        };
     }
 }

@@ -1,3 +1,4 @@
+using Lyra.Common;
 using Lyra.Imaging.Codecs;
 
 namespace Lyra.Imaging.Pipeline;
@@ -19,9 +20,8 @@ internal static class DecoderManager
         HdrDecoder.Value
     ];
 
-    public static IImageDecoder GetDecoder(string filePath)
+    public static IImageDecoder GetDecoder(ImageFormatType format)
     {
-        var extension = Path.GetExtension(filePath).ToLower();
-        return Decoders.FirstOrDefault(it => it.CanDecode(extension), Decoders.First());
+        return Decoders.FirstOrDefault(it => it.CanDecode(format), Decoders.First());
     }
 }

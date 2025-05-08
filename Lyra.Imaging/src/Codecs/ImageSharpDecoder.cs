@@ -1,5 +1,5 @@
 using Lyra.Common;
-using Lyra.Common.Extensions;
+using Lyra.Common.SystemExtensions;
 using Lyra.Imaging.Data;
 using Lyra.Imaging.Pipeline;
 using MetadataExtractor;
@@ -12,33 +12,21 @@ namespace Lyra.Imaging.Codecs;
 
 internal class ImageSharpDecoder : IImageDecoder
 {
-    private static readonly string[] AllExtensions =
-    [
-        ".bmp",
-        ".jfif",
-        ".jpeg", ".jpg",
-        ".png",
-        ".tga",
-        ".tiff", ".tif",
-        ".webp"
-    ];
+    public bool CanDecode(ImageFormatType format) => format is ImageFormatType.Tga or ImageFormatType.Tiff;
+    
+    // public bool CanDecode(ImageFormatType format) => format 
+    //     is ImageFormatType.Bmp
+    //     or ImageFormatType.Jfif
+    //     or ImageFormatType.Jpeg
+    //     or ImageFormatType.Png
+    //     or ImageFormatType.Tga 
+    //     or ImageFormatType.Tiff
+    //     or ImageFormatType.Webp;
 
-    private static readonly string[] PriorityExtensions =
-    [
-        ".tga",
-        ".tiff", ".tif"
-    ];
-
-    public bool CanDecode(string extension)
+    public async Task<Composite> DecodeAsync(Composite composite)
     {
-        return PriorityExtensions.Contains(extension.ToLower());
-    }
-
-    public async Task<Composite> DecodeAsync(string path)
-    {
+        var path = composite.FileInfo.FullName;
         Logger.Debug($"[ImageSharpDecoder] [Thread: {CurrentThread.GetNameOrId()}] Decoding: {path}");
-
-        var composite = new Composite(new FileInfo(path));
         
         var parsedMetadata = ImageMetadataReader.ReadMetadata(path);
         composite.ExifInfo = MetadataProcessor.ProcessMetadata(parsedMetadata);

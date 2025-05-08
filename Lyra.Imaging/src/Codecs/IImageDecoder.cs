@@ -1,10 +1,11 @@
+using Lyra.Common;
 using Lyra.Imaging.Data;
 
 namespace Lyra.Imaging.Codecs;
 
 internal interface IImageDecoder
 {
-    bool CanDecode(string extension);
+    bool CanDecode(ImageFormatType format);
     
-    Task<Composite> DecodeAsync(string path);
+    Task<Composite> DecodeAsync(Composite composite);
 }

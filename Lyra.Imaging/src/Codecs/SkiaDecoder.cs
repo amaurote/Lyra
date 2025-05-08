@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 using Lyra.Common;
-using Lyra.Common.Extensions;
+using Lyra.Common.SystemExtensions;
 using Lyra.Imaging.Data;
 using Lyra.Imaging.Pipeline;
 using MetadataExtractor;
@@ -11,26 +11,19 @@ namespace Lyra.Imaging.Codecs;
 
 internal class SkiaDecoder : IImageDecoder
 {
-    private static readonly string[] Extensions =
-    [
-        ".bmp",
-        ".ico",
-        ".jfif",
-        ".jpeg", ".jpg",
-        ".png",
-        ".webp"
-    ];
+    public bool CanDecode(ImageFormatType format) => format 
+        is ImageFormatType.Bmp 
+        or ImageFormatType.Ico
+        or ImageFormatType.Jfif
+        or ImageFormatType.Jpeg
+        or ImageFormatType.Png
+        or ImageFormatType.Webp;
 
-    public bool CanDecode(string extension)
+    public async Task<Composite> DecodeAsync(Composite composite)
     {
-        return Extensions.Contains(extension.ToLower());
-    }
-
-    public async Task<Composite> DecodeAsync(string path)
-    {
+        var path = composite.FileInfo.FullName;
         Logger.Debug($"[SkiaDecoder] [Thread: {CurrentThread.GetNameOrId()}] Decoding: {path}");
         
-        var composite = new Composite(new FileInfo(path));
         return await Task.Run(() =>
         {
             using var stream = File.OpenRead(path);
