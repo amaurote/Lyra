@@ -36,8 +36,8 @@ public partial class SdlCore : IDisposable
         InitializeInput();
         Imagin.Initialize();
 
-        DirectoryNavigator.SearchImages("/Users/nineveh/dev/temp/sample_images/0kaga15ef9yb1.webp");
-        LoadImage();
+        // TODO Load from arguments
+        // LoadImage();
     }
 
     private void InitializeWindowAndRenderer()

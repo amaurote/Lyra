@@ -6,7 +6,7 @@ public static class FilePathProcessor
 {
     private static readonly StringComparer PathComparer = OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
 
-    public static List<string> ProcessImagePaths(List<string> paths)
+    public static List<string> ProcessImagePaths(List<string> paths, out bool singleDirectory)
     {
         var allFiles = paths
             .Select(Path.GetFullPath)
@@ -25,6 +25,14 @@ public static class FilePathProcessor
             .Where(file => ImageFormat.IsSupported(Path.GetExtension(file)))
             .OrderBy(f => f, PathComparer)
             .ToList();
+        
+        var uniqueDirectories = supported
+            .Select(Path.GetDirectoryName)
+            .Where(d => d != null)
+            .Distinct(PathComparer)
+            .ToList();
+
+        singleDirectory = uniqueDirectories.Count == 1;
 
         Logger.Info($"[FilePathProcessor] Collected {supported.Count} supported files from dropped paths.");
 

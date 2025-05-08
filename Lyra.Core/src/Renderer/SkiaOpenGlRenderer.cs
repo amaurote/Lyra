@@ -75,8 +75,11 @@ public class SkiaOpenGlRenderer : IRenderer
 
     private void RenderImage(SKCanvas canvas)
     {
-        var imgWidth = _composite!.Image!.Width;
-        var imgHeight = _composite!.Image!.Height;
+        if(_composite?.Image == null)
+            return;
+        
+        var imgWidth = _composite.Image.Width;
+        var imgHeight = _composite.Image.Height;
 
         var scale = _zoomPercentage / 100f;
         var drawWidth = imgWidth * scale;
@@ -146,9 +149,10 @@ public class SkiaOpenGlRenderer : IRenderer
         var fileSize = _composite.FileInfo.Length >= 2 * 1024 * 1024
             ? $"{Math.Round((double)fileInfo.Length / (1024 * 1024), 1)} MB"
             : $"{Math.Round((double)fileInfo.Length / 1024)} kB";
-
+        
         var lines = new List<string>
         {
+            $"[Collection]    {DirectoryNavigator.GetCollectionType().Description()}  |  Dir: {_composite.FileInfo.DirectoryName}/",
             $"[File]          {DirectoryNavigator.GetIndex().index}/{DirectoryNavigator.GetIndex().count}  |  {fileInfo.Name}  |  {fileSize}",
             $"[Image]         {_composite.ImageFormatType.Description()}  |  {_composite.Image?.Width ?? 0}x{_composite.Image?.Height ?? 0}"
             + (_composite.IsGrayscale ? "  |  Greyscale" : ""),
