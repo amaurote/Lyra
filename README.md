@@ -7,9 +7,9 @@ with a streamlined .NET architecture.
 
 ## Overview
 
-Lyra Viewer is a high-performance image viewer built with **SDL3** and **SkiaSharp**, designed for **speed, minimalism,
+Lyra is a high-performance image viewer built with **SDL3** and **SkiaSharp**, designed for **speed, minimalism,
 and smooth navigation**. It provides a distraction-free way to preview and inspect image assets — ideal for creative
-professionals that use images as a core resource in their workflow, such as:
+professionals who use images as a core resource in their workflow, such as:
 
 - 2D/3D artists
 - Game developers

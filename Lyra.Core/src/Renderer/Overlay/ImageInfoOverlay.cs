@@ -1,23 +1,32 @@
-using Lyra.Events;
 using Lyra.SdlCore;
 using SkiaSharp;
-using static Lyra.Events.EventManager;
 
 namespace Lyra.Renderer.Overlay;
 
-public class ImageInfoOverlay : IDisplayScaleAware, IOverlay<List<string>>
+public class ImageInfoOverlay : IOverlay<List<string>>
 {
-    private SKFont? _font;
-
     private readonly SKPaint _textPaint = new()
     {
         Color = SKColors.White,
         IsAntialias = true
     };
 
+    public float Scale { get; set; }
+    public SKFont? Font { get; set; }
+
+    public ImageInfoOverlay()
+    {
+        ReloadFont();
+    }
+
+    public void ReloadFont()
+    {
+        Font = FontHelper.GetScaledMonoFont(14, Scale);
+    }
+
     public void Render(SKCanvas canvas, DrawableBounds drawableBounds, SKColor textPaint, List<string> lines)
     {
-        if (_font == null)
+        if (Font == null)
             return;
 
         if (lines.Count == 0)
@@ -25,28 +34,14 @@ public class ImageInfoOverlay : IDisplayScaleAware, IOverlay<List<string>>
 
         _textPaint.Color = textPaint;
 
-        const int padding = 12;
-        var lineHeight = _font.Size + 7;
+        var padding = 13 * Scale;
+        var lineHeight = Font.Size + (7 * Scale);
 
-        var textY = padding + _font.Size;
+        var textY = padding + Font.Size;
         foreach (var line in lines)
         {
-            canvas.DrawText(line, padding, textY, SKTextAlign.Left, _font, _textPaint);
+            canvas.DrawText(line, padding, textY, SKTextAlign.Left, Font, _textPaint);
             textY += lineHeight;
-        }
-    }
-
-    private float? _lastScale;
-
-    public void OnDisplayScaleChanged(DisplayScaleChangedEvent e)
-    {
-        const float tolerance = 0.01f;
-        var roundedScale = MathF.Round(e.Scale, 2);
-        if (_lastScale == null || MathF.Abs((float)(roundedScale - _lastScale)!) > tolerance)
-        {
-            _font?.Dispose();
-            _font = FontHelper.GetScaledMonoFont(12, roundedScale);
-            _lastScale = roundedScale;
         }
     }
 }

@@ -39,11 +39,6 @@ public class PanHelper(IntPtr window, SKImage? image, int zoomPercentage)
         Clamp();
     }
 
-    public void Reset()
-    {
-        CurrentOffset = SKPoint.Empty;
-    }
-
     public void Clamp()
     {
         var (imgW, imgH, bounds, _) = GetScaledImageAndDrawableBounds();
