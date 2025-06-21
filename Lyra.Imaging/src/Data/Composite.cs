@@ -16,9 +16,11 @@ public class Composite(FileInfo fileInfo)
     public bool IsVectorGraphics = false;
     public SKPicture? Picture;
 
-    public float? ContentWidth => IsVectorGraphics ? Picture?.CullRect.Width : Image?.Width;
-    public float? ContentHeight => IsVectorGraphics ? Picture?.CullRect.Height : Image?.Height;
+    public float ContentWidth => ((IsVectorGraphics) ? Picture?.CullRect.Width : Image?.Width) ?? 0f;
+    public float ContentHeight => ((IsVectorGraphics) ? Picture?.CullRect.Height : Image?.Height) ?? 0f;
 
+    public bool IsEmpty => Image == null && Picture == null;
+    
     public void Dispose()
     {
         Image?.Dispose();

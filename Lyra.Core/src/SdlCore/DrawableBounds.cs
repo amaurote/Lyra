@@ -1,7 +1,3 @@
 namespace Lyra.SdlCore;
 
-public readonly struct DrawableBounds(int width, int height)
-{
-    public int Width { get; } = width;
-    public int Height { get; } = height;
-}
+public readonly record struct DrawableBounds(int Width, int Height);

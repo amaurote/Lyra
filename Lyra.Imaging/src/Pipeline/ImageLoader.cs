@@ -43,7 +43,7 @@ internal class ImageLoader
             
             stopwatch.Stop();
             
-            if (composite.Image != null)
+            if (!composite.IsEmpty)
                 LoadTimeEstimator.RecordLoadTime(composite.FileInfo.Extension, composite.FileInfo.Length, stopwatch.Elapsed.TotalMilliseconds);
 
             return composite;

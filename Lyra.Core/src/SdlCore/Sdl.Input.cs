@@ -142,7 +142,7 @@ public partial class SdlCore
             return;
 
         if (_displayMode == DisplayMode.Free)
-            _displayMode = DimensionHelper.GetInitialDisplayMode(_window, _composite.Image, out _zoomPercentage);
+            _displayMode = DimensionHelper.GetInitialDisplayMode(_window, _composite, out _zoomPercentage);
         else if (_zoomPercentage == 100)
         {
             UpdateFitToScreen();
@@ -167,10 +167,10 @@ public partial class SdlCore
 
     private void ApplyZoom(int newZoom)
     {
-        if (_composite == null || _panHelper == null)
+        if (_composite == null || _composite.IsEmpty || _panHelper == null)
             return;
 
-        _zoomPercentage = Math.Clamp(newZoom, 10, 1000);
+        _zoomPercentage = ClampZoom(newZoom);
         _displayMode = _zoomPercentage == 100 ? DisplayMode.OriginalImageSize : DisplayMode.Free;
 
         _renderer.SetDisplayMode(_displayMode);
@@ -182,7 +182,7 @@ public partial class SdlCore
 
     private void ZoomAtPoint(float mouseX, float mouseY, float direction)
     {
-        if (_composite == null || _panHelper == null)
+        if (_composite == null || _composite.IsEmpty || _panHelper == null)
             return;
 
         _panHelper.UpdateZoom(_zoomPercentage);
@@ -194,7 +194,7 @@ public partial class SdlCore
 
         // Calculate new zoom
         var oldZoom = _zoomPercentage;
-        var newZoom = Math.Clamp(oldZoom + normalizedDirection * ZoomStep, 10, 1000);
+        var newZoom = ClampZoom(oldZoom + normalizedDirection * ZoomStep);
         if (newZoom == oldZoom)
             return;
 
@@ -215,10 +215,10 @@ public partial class SdlCore
 
     private void UpdateFitToScreen()
     {
-        if (_composite?.Image == null)
+        if (_composite == null || _composite.IsEmpty)
             return;
 
-        _zoomPercentage = DimensionHelper.GetZoomToFitScreen(_window, _composite.Image.Width, _composite.Image.Height);
+        _zoomPercentage = DimensionHelper.GetZoomToFitScreen(_window, _composite.ContentWidth, _composite.ContentHeight);
         _displayMode = _zoomPercentage == 100 ? DisplayMode.OriginalImageSize : DisplayMode.FitToScreen;
         _renderer.SetDisplayMode(_displayMode);
         _renderer.SetZoom(_zoomPercentage);
@@ -226,7 +226,7 @@ public partial class SdlCore
 
     private void StartPanning(float x, float y)
     {
-        if (_composite?.Image == null || _panHelper == null)
+        if (_composite == null || _composite.IsEmpty || _panHelper == null)
             return;
 
         if (_panHelper.CanPan())
@@ -243,7 +243,7 @@ public partial class SdlCore
 
     private void HandlePanning(float x, float y)
     {
-        if (_composite == null || !_isPanning || _panHelper == null)
+        if (_composite == null || _composite.IsEmpty || !_isPanning || _panHelper == null)
             return;
 
         _panHelper.Move(x, y);
@@ -257,5 +257,11 @@ public partial class SdlCore
 
         _panHelper.Clamp();
         _renderer.SetOffset(_panHelper.CurrentOffset);
+    }
+
+    private int ClampZoom(int value)
+    {
+        var max = _composite?.IsVectorGraphics == true ? 10000 : 1000;
+        return Math.Clamp(value, 10, max);
     }
 }

@@ -60,10 +60,10 @@ exported from tools like **Blender**, **Quixel Bridge**, and other content creat
 
 ### **Vector Formats / Specialized Formats**
 
-| Format     | Description                                            |
-|------------|--------------------------------------------------------|
-| ~~`.svg`~~ | ~~Scalable vector graphics for masks or UI overlays.~~ |
-| ~~`.psd`~~ | ~~Photoshop files (preview-only support).~~            |
+| Format     | Description                                        |
+|------------|----------------------------------------------------|
+| `.svg`     | Scalable vector graphics for masks or UI overlays. |
+| ~~`.psd`~~ | ~~Photoshop files (preview-only support).~~        |
 
 ### **Minor Formats**
 
@@ -77,18 +77,19 @@ exported from tools like **Blender**, **Quixel Bridge**, and other content creat
 
 ## **Keyboard Shortcuts & Controls**
 
-| Key                               | Action                                       |
-|-----------------------------------|----------------------------------------------|
-| `←` / `→`                         | Previous / Next image                        |
-| `Home` / `End` <br/>`⌘ ←` / `⌘ →` | First / Last image                           |
-| `+` / `-`                         | Zoom in / Zoom out                           |
-| `Mouse Wheel`                     | Zoom at cursor position                      |
-| `0`                               | Toggle **Fit to Screen** / **Original Size** |
-| `9`                               | Toggle sampling mode                         |
-| `F`                               | Toggle fullscreen                            |
-| `B`                               | Toggle background mode                       |
-| `I`                               | Toggle image information overlay             |
-| `Esc`                             | Exit application                             |
+| Key            | Action                                       |
+|----------------|----------------------------------------------|
+| `←` / `→`      | Previous / Next image                        |
+| `Home` / `End` | First / Last image                           |
+| `⌘ ←` / `⌘ →`  | First / Last image (macOS)                   |
+| `+` / `-`      | Zoom in / Zoom out                           |
+| `Mouse Wheel`  | Zoom at cursor position                      |
+| `0`            | Toggle **Fit to Screen** / **Original Size** |
+| `9`            | Toggle sampling mode                         |
+| `F`            | Toggle fullscreen                            |
+| `B`            | Toggle background mode                       |
+| `I`            | Toggle image information overlay             |
+| `Esc`          | Exit application                             |
 
 - **Drag & Drop:** Open a file or directory by dragging it into Lyra Viewer.
 

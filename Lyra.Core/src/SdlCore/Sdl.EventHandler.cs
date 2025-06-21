@@ -20,7 +20,6 @@ public partial class SdlCore
                 case EventType.KeyDown:
                     if (!e.Key.Repeat)
                         HandleScancode(e.Key.Scancode, e.Key.Mod);
-
                     break;
 
                 case EventType.MouseButtonDown:

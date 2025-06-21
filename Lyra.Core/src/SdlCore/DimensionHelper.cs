@@ -1,24 +1,25 @@
-using SkiaSharp;
+using Lyra.Common;
+using Lyra.Imaging.Data;
 using static SDL3.SDL;
 
 namespace Lyra.SdlCore;
 
 public static class DimensionHelper
 {
-    public static DisplayMode GetInitialDisplayMode(IntPtr window, SKImage? image, out int zoomPercentage)
+    public static DisplayMode GetInitialDisplayMode(IntPtr window, Composite? composite, out int zoomPercentage)
     {
         zoomPercentage = 100;
-        if (image == null)
-        {
+        
+        if (composite == null || composite.IsEmpty)
             return DisplayMode.OriginalImageSize;
-        }
-
+        
         var bounds = GetDrawableSize(window, out _);
-        if (image.Width < bounds.Width && image.Height < bounds.Height)
+        
+        if (composite.ContentWidth < bounds.Width && composite.ContentHeight < bounds.Height)
             return DisplayMode.OriginalImageSize;
         else
         {
-            zoomPercentage = GetZoomToFitScreen(window, image.Width, image.Height);
+            zoomPercentage = GetZoomToFitScreen(window, composite.ContentWidth, composite.ContentHeight);
             return DisplayMode.FitToScreen;
         }
     }
@@ -30,10 +31,11 @@ public static class DimensionHelper
         return new DrawableBounds((int)(logicalW * scale), (int)(logicalH * scale));
     }
 
-    public static int GetZoomToFitScreen(IntPtr window, int imageWidth, int imageHeight)
+    public static int GetZoomToFitScreen(IntPtr window, float imageWidth, float imageHeight)
     {
+        Logger.Debug($"size: {imageWidth}x{imageHeight}");
         var bounds = GetDrawableSize(window, out _);
-        var scale = Math.Min((float)bounds.Width / imageWidth, (float)bounds.Height / imageHeight);
+        var scale = MathF.Min(bounds.Width / imageWidth, bounds.Height / imageHeight);
         return (int)MathF.Round(scale * 100f);
     }
 }

@@ -76,7 +76,7 @@ public partial class SdlCore : IDisposable
 
         _renderer.SetComposite(_composite);
         _renderer.SetOffset(SKPoint.Empty);
-        _displayMode = DimensionHelper.GetInitialDisplayMode(_window, _composite?.Image, out _zoomPercentage);
+        _displayMode = DimensionHelper.GetInitialDisplayMode(_window, _composite, out _zoomPercentage);
         _renderer.SetDisplayMode(_displayMode);
         _renderer.SetZoom(_zoomPercentage);
     }
