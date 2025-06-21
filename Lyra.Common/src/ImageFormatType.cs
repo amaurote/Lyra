@@ -61,10 +61,9 @@ public enum ImageFormatType
     [Description("Photoshop File")]
     Psd, // TODO
 
-    [DisabledType]
     [FileExtension([".svg"])]
     [Description("Scalable Vector Graphics")]
-    Svg, // TODO
+    Svg,
 
     [FileExtension([".tga"])]
     [Description("TARGA Image")]

@@ -11,7 +11,7 @@ using DisplayMode = Lyra.SdlCore.DisplayMode;
 
 namespace Lyra.Renderer;
 
-public class SkiaOpenGlRenderer : IRenderer
+public partial class SkiaOpenGlRenderer : IRenderer
 {
     private readonly IntPtr _glContext;
     private readonly GRContext _grContext;
@@ -34,7 +34,11 @@ public class SkiaOpenGlRenderer : IRenderer
     public SkiaOpenGlRenderer(IntPtr window)
     {
         Subscribe<DrawableSizeChangedEvent>(OnDrawableSizeChanged);
-
+        
+        GLSetAttribute(GLAttr.ContextMajorVersion, 3);
+        GLSetAttribute(GLAttr.ContextMinorVersion, 2);
+        GLSetAttribute(GLAttr.ContextProfileMask, (int)GLProfile.Core);
+        
         _glContext = GLCreateContext(window);
         GLMakeCurrent(window, _glContext);
         GLSetSwapInterval(1);
@@ -65,8 +69,14 @@ public class SkiaOpenGlRenderer : IRenderer
                 break;
         }
 
-        if (_composite?.Image != null)
+        if (_composite is { IsVectorGraphics: true, Picture: not null })
+        {
+            RenderSvg(canvas, _composite.Picture);
+        }
+        else if (_composite?.Image != null)
+        {
             RenderImage(canvas);
+        }
 
         RenderOverlay(canvas);
 
@@ -81,9 +91,9 @@ public class SkiaOpenGlRenderer : IRenderer
         var imgWidth = _composite.Image.Width;
         var imgHeight = _composite.Image.Height;
 
-        var scale = _zoomPercentage / 100f;
-        var drawWidth = imgWidth * scale;
-        var drawHeight = imgHeight * scale;
+        var imageScale = _zoomPercentage / 100f;
+        var drawWidth = imgWidth * imageScale;
+        var drawHeight = imgHeight * imageScale;
 
         var left = (_windowWidth - drawWidth) / 2 + _offset.X;
         var top = (_windowHeight - drawHeight) / 2 + _offset.Y;
@@ -98,25 +108,25 @@ public class SkiaOpenGlRenderer : IRenderer
         };
 
         using var paint = new SKPaint();
-        canvas.DrawImage(_composite!.Image!, destRect, sampling, paint);
+        canvas.DrawImage(_composite.Image, destRect, sampling, paint);
     }
 
     private SKSurface CreateSurface()
     {
         var fbInfo = new GRGlFramebufferInfo(0, 0x8058); // GL_RGBA8
         var renderTarget = new GRBackendRenderTarget(_windowWidth, _windowHeight, 0, 8, fbInfo);
-        return SKSurface.Create(_grContext, renderTarget, GRSurfaceOrigin.BottomLeft, SKColorType.Rgba8888)!;
+        return SKSurface.Create(_grContext, renderTarget, GRSurfaceOrigin.BottomLeft, SKColorType.Rgba8888);
     }
 
     private void RenderOverlay(SKCanvas canvas)
     {
         var bounds = new DrawableBounds(_windowWidth, _windowHeight);
-        var textColor = _backgroundMode == BackgroundMode.Black ? SKColors.White : SKColors.Black;
+        var textColor = _backgroundMode == BackgroundMode.White ? SKColors.Black : SKColors.White;
         
         if(_infoMode != InfoMode.None)
-            _imageInfoOverlay.Render(canvas, bounds, textColor, PrepareInfoLines());
+            _imageInfoOverlay.Render(canvas, bounds, textColor, (_composite, GetViewerState()));
 
-        if (_composite?.Image == null)
+        if (_composite?.Image == null && _composite?.Picture == null)
             _centeredOverlay.Render(canvas, bounds, textColor, "No image");
     }
 
@@ -125,11 +135,11 @@ public class SkiaOpenGlRenderer : IRenderer
         var squareSize = (int)(24 * _displayScale);
 
         using var lightGray = new SKPaint();
-        lightGray.Color = new SKColor(220, 220, 220);
+        lightGray.Color = new SKColor(120, 120, 120);
         lightGray.IsAntialias = false;
 
         using var darkGray = new SKPaint();
-        darkGray.Color = new SKColor(180, 180, 180);
+        darkGray.Color = new SKColor(80, 80, 80);
         darkGray.IsAntialias = false;
 
         for (var y = 0; y < _windowHeight; y += squareSize)
@@ -140,37 +150,18 @@ public class SkiaOpenGlRenderer : IRenderer
         }
     }
 
-    private List<string> PrepareInfoLines()
+    private ViewerState GetViewerState()
     {
-        if (_composite == null)
-            return [];
-
-        var fileInfo = _composite.FileInfo;
-        var fileSize = _composite.FileInfo.Length >= 2 * 1024 * 1024
-            ? $"{Math.Round((double)fileInfo.Length / (1024 * 1024), 1)} MB"
-            : $"{Math.Round((double)fileInfo.Length / 1024)} kB";
-        
-        var lines = new List<string>
+        return new ViewerState
         {
-            $"[Collection]    {DirectoryNavigator.GetCollectionType().Description()}  |  Dir: {_composite.FileInfo.DirectoryName}/",
-            $"[File]          {DirectoryNavigator.GetIndex().index}/{DirectoryNavigator.GetIndex().count}  |  {fileInfo.Name}  |  {fileSize}",
-            $"[Image]         {_composite.ImageFormatType.Description()}  |  {_composite.Image?.Width ?? 0}x{_composite.Image?.Height ?? 0}"
-            + (_composite.IsGrayscale ? "  |  Greyscale" : ""),
-            $"[Displaying]    Zoom: {_zoomPercentage}%  |  Display Mode: {_displayMode.Description()}",
-            $"[System]        Graphics API: OpenGL  |  Sampling: {_samplingMode.Description()}"
+            CollectionType = DirectoryNavigator.GetCollectionType().Description(),
+            CollectionIndex = DirectoryNavigator.GetIndex().index,
+            CollectionCount = DirectoryNavigator.GetIndex().count,
+            Zoom = _zoomPercentage,
+            DisplayMode = _displayMode.Description(),
+            SamplingMode = _samplingMode.Description(),
+            ShowExif = _infoMode == InfoMode.WithExif
         };
-
-        if (_infoMode == InfoMode.WithExif)
-        {
-            lines.AddRange(["", "", "", "[EXIF ↯]", ""]);
-            if (_composite?.ExifInfo?.HasData() == true)
-            {
-                var exifLines = _composite.ExifInfo.ToLines();
-                lines.AddRange(exifLines);
-            }
-        }
-
-        return lines;
     }
 
     public void OnDrawableSizeChanged(DrawableSizeChangedEvent e)
