@@ -3,7 +3,7 @@ using Lyra.Imaging.Pipeline;
 
 namespace Lyra.Imaging;
 
-public static class Imaging
+public static class ImageStore
 {
     private static readonly ImageLoader ImageLoader = new();
     
@@ -15,7 +15,7 @@ public static class Imaging
     public static Composite GetImage(string path)
     {
         if (!File.Exists(path))
-            throw new FileNotFoundException($"[Imaging] File not found: {path}");
+            throw new FileNotFoundException($"[ImageStore] File not found: {path}");
 
         return ImageLoader.GetImage(path);
     }

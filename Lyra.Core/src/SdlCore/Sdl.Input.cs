@@ -7,7 +7,7 @@ namespace Lyra.SdlCore;
 
 public partial class SdlCore
 {
-    private Dictionary<Scancode, Action> _scanActions = null!;
+    private Dictionary<Scancode, Action> _scanActions;
 
     private PanHelper? _panHelper;
 

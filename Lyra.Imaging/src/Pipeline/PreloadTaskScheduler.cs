@@ -5,7 +5,7 @@ namespace Lyra.Imaging.Pipeline;
 internal class PreloadTaskScheduler : TaskScheduler
 {
     private readonly BlockingCollection<Task> _tasks = new();
-    private readonly List<Thread> _threads; // Hold thread references to prevent GC collection
+    private readonly List<Thread> _threads; // Hold thread references to prevent a GC collection
 
     public PreloadTaskScheduler(int maxDegreeOfParallelism)
     {
@@ -26,7 +26,7 @@ internal class PreloadTaskScheduler : TaskScheduler
         }).ToList();
     }
 
-    protected override IEnumerable<Task>? GetScheduledTasks() => _tasks.ToArray();
+    protected override IEnumerable<Task> GetScheduledTasks() => _tasks.ToArray();
     protected override void QueueTask(Task task) => _tasks.Add(task);
     protected override bool TryExecuteTaskInline(Task task, bool taskWasPreviouslyQueued) => false;
 }

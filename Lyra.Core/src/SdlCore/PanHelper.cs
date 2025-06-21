@@ -29,7 +29,7 @@ public class PanHelper(IntPtr window, SKImage? image, int zoomPercentage)
 
     public void Move(float rawX, float rawY)
     {
-        var (_, _, bounds, scale) = GetScaledImageAndDrawableBounds();
+        var (_, _, _, scale) = GetScaledImageAndDrawableBounds();
 
         var current = new SKPoint(rawX * scale, rawY * scale);
         var delta = current - _lastMousePosition;

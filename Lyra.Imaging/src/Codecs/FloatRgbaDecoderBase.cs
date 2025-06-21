@@ -20,8 +20,7 @@ internal abstract class FloatRgbaDecoderBase : IImageDecoder
 
         return await Task.Run(() =>
         {
-            var ptr = IntPtr.Zero;
-            var success = LoadPixels(path, out ptr, out var width, out var height);
+            var success = LoadPixels(path, out var ptr, out var width, out var height);
 
             Logger.Debug($"[{GetType().Name}] LoadPixels returned: success={success}, ptr=0x{ptr:X}, width={width}, height={height}");
 

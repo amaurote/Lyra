@@ -1,10 +1,10 @@
 using Lyra.Common;
+using Lyra.Imaging;
 using Lyra.Imaging.Data;
 using Lyra.Loader;
 using Lyra.Renderer;
 using SkiaSharp;
 using static SDL3.SDL;
-using Imagin = Lyra.Imaging.Imaging;
 
 namespace Lyra.SdlCore;
 
@@ -34,7 +34,7 @@ public partial class SdlCore : IDisposable
 
         InitializeWindowAndRenderer();
         InitializeInput();
-        Imagin.Initialize();
+        ImageStore.Initialize();
 
         // TODO Load from arguments
         // LoadImage();
@@ -58,7 +58,7 @@ public partial class SdlCore : IDisposable
     private void LoadImage()
     {
         var keepPaths = DirectoryNavigator.GetRange(CleanupSafeRange);
-        Imagin.Cleanup(keepPaths);
+        ImageStore.Cleanup(keepPaths);
 
         var currentPath = DirectoryNavigator.GetCurrent();
         if (currentPath == null)
@@ -68,9 +68,9 @@ public partial class SdlCore : IDisposable
         }
         else
         {
-            _composite = Imagin.GetImage(currentPath);
+            _composite = ImageStore.GetImage(currentPath);
             var preloadPaths = DirectoryNavigator.GetRange(PreloadDepth);
-            Imagin.Preload(preloadPaths);
+            ImageStore.Preload(preloadPaths);
             _panHelper = new PanHelper(_window, _composite.Image, _zoomPercentage);
         }
 
@@ -103,7 +103,7 @@ public partial class SdlCore : IDisposable
         Logger.Info("[Core] Disposing...");
 
         _renderer.Dispose();
-        Imagin.SaveAndDispose();
+        ImageStore.SaveAndDispose();
         _composite?.Dispose();
 
         if (_window != IntPtr.Zero)

@@ -51,7 +51,7 @@ internal class ImageSharpDecoder : IImageDecoder
             composite.Image = SKImage.FromBitmap(bitmap);
             return composite;
         }
-        catch (Exception _)
+        catch (Exception)
         {
             Logger.Warning($"[ImageSharpDecoder] Image could not be loaded: {path}");
             return composite;

@@ -10,7 +10,7 @@ static class Program
         LogSetup();
         Logger.Info($"[Application] Application started on {RuntimeInformation.RuntimeIdentifier}");
 
-        Imaging.Imaging.Initialize();
+        Imaging.ImageStore.Initialize();
 
         try
         {
