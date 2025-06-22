@@ -2,7 +2,6 @@ using Lyra.Common;
 using Lyra.Common.SystemExtensions;
 using Lyra.Imaging.Data;
 using Svg.Skia;
-using SkiaSharp;
 using static System.Threading.Thread;
 
 namespace Lyra.Imaging.Codecs;
@@ -20,7 +19,7 @@ public class SvgDecoder : IImageDecoder
         {
             var svg = new SKSvg();
             svg.Load(path);
-            
+
             var picture = svg.Picture;
 
             if (picture == null)
@@ -29,28 +28,13 @@ public class SvgDecoder : IImageDecoder
                 return composite;
             }
 
-            // Fallback if bounds are empty or too small
             var originalBounds = picture.CullRect;
-            if (originalBounds.IsEmpty || originalBounds.Width < 1 || originalBounds.Height < 1)
-            {
-                Logger.Debug("[SvgDecoder] Detected empty or invalid CullRect. Applying fallback bounding box estimation.");
+            if (originalBounds.IsEmpty || originalBounds.Width < 1 || originalBounds.Height < 1) 
+                Logger.Debug("[SvgDecoder] Detected empty or invalid CullRect.");
 
-                var recorder = new SKPictureRecorder();
-                var canvas = recorder.BeginRecording(SKRect.Create(4096, 4096));
-                picture.Playback(canvas);
-                var measuredPicture = recorder.EndRecording();
+            composite.Picture = picture;
+            Logger.Debug($"[SvgDecoder] CullRect bounds: {originalBounds}");
 
-                composite.Picture = measuredPicture;
-
-                var measuredBounds = measuredPicture.CullRect;
-                Logger.Debug($"[SvgDecoder] Measured bounds: {measuredBounds}");
-            }
-            else
-            {
-                composite.Picture = picture;
-                Logger.Debug($"[SvgDecoder] CullRect bounds: {originalBounds}");
-            }
-            
             composite.IsVectorGraphics = true;
             return composite;
         });

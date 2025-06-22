@@ -34,11 +34,11 @@ public partial class SkiaOpenGlRenderer : IRenderer
     public SkiaOpenGlRenderer(IntPtr window)
     {
         Subscribe<DrawableSizeChangedEvent>(OnDrawableSizeChanged);
-        
+
         GLSetAttribute(GLAttr.ContextMajorVersion, 3);
         GLSetAttribute(GLAttr.ContextMinorVersion, 2);
         GLSetAttribute(GLAttr.ContextProfileMask, (int)GLProfile.Core);
-        
+
         _glContext = GLCreateContext(window);
         GLMakeCurrent(window, _glContext);
         GLSetSwapInterval(1);
@@ -85,9 +85,9 @@ public partial class SkiaOpenGlRenderer : IRenderer
 
     private void RenderImage(SKCanvas canvas)
     {
-        if(_composite?.Image == null)
+        if (_composite?.Image == null)
             return;
-        
+
         var imgWidth = _composite.Image.Width;
         var imgHeight = _composite.Image.Height;
 
@@ -122,8 +122,8 @@ public partial class SkiaOpenGlRenderer : IRenderer
     {
         var bounds = new DrawableBounds(_windowWidth, _windowHeight);
         var textColor = _backgroundMode == BackgroundMode.White ? SKColors.Black : SKColors.White;
-        
-        if(_infoMode != InfoMode.None)
+
+        if (_infoMode != InfoMode.None)
             _imageInfoOverlay.Render(canvas, bounds, textColor, (_composite, GetViewerState()));
 
         if (_composite?.Image == null && _composite?.Picture == null)
@@ -159,7 +159,7 @@ public partial class SkiaOpenGlRenderer : IRenderer
             CollectionCount = DirectoryNavigator.GetIndex().count,
             Zoom = _zoomPercentage,
             DisplayMode = _displayMode.Description(),
-            SamplingMode = _samplingMode.Description(),
+            SamplingMode = (_composite?.IsVectorGraphics == true) ? SamplingMode.Vector.Description() : _samplingMode.Description(),
             ShowExif = _infoMode == InfoMode.WithExif
         };
     }
@@ -175,11 +175,17 @@ public partial class SkiaOpenGlRenderer : IRenderer
     public void SetOffset(SKPoint offset) => _offset = offset;
     public void SetDisplayMode(DisplayMode displayMode) => _displayMode = displayMode;
     public void SetZoom(int zoomPercentage) => _zoomPercentage = zoomPercentage;
-    public void ToggleSampling() 
-        => _samplingMode = (SamplingMode)(((int)_samplingMode + 1) % System.Enum.GetValues<SamplingMode>().Length);
-    public void ToggleBackground() 
+
+    public void ToggleSampling()
+    {
+        if (_composite is { IsVectorGraphics: false })
+            _samplingMode = (SamplingMode)(((int)_samplingMode + 1) % 4);
+    }
+
+    public void ToggleBackground()
         => _backgroundMode = (BackgroundMode)(((int)_backgroundMode + 1) % System.Enum.GetValues<BackgroundMode>().Length);
-    public void ToggleInfo() 
+
+    public void ToggleInfo()
         => _infoMode = (InfoMode)(((int)_infoMode + 1) % System.Enum.GetValues<InfoMode>().Length);
 
     public void Dispose()
