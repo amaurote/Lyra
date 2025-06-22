@@ -1,9 +1,10 @@
+using Lyra.Imaging.Data;
 using SkiaSharp;
 using static Lyra.SdlCore.DimensionHelper;
 
 namespace Lyra.SdlCore;
 
-public class PanHelper(IntPtr window, SKImage? image, int zoomPercentage)
+public class PanHelper(IntPtr window, Composite composite, int zoomPercentage)
 {
     private int _zoomPercentage = zoomPercentage;
     private SKPoint _lastMousePosition;
@@ -17,19 +18,19 @@ public class PanHelper(IntPtr window, SKImage? image, int zoomPercentage)
 
     public void Start(float rawX, float rawY)
     {
-        var (_, _, _, scale) = GetScaledImageAndDrawableBounds();
+        var (_, _, _, scale) = GetScaledContentAndBounds();
         _lastMousePosition = new SKPoint(rawX * scale, rawY * scale);
     }
 
     public bool CanPan()
     {
-        var (imgW, imgH, bounds, _) = GetScaledImageAndDrawableBounds();
-        return imgW > bounds.Width || imgH > bounds.Height;
+        var (contentW, contentH, bounds, _) = GetScaledContentAndBounds();
+        return contentW > bounds.Width || contentH > bounds.Height;
     }
 
     public void Move(float rawX, float rawY)
     {
-        var (_, _, _, scale) = GetScaledImageAndDrawableBounds();
+        var (_, _, _, scale) = GetScaledContentAndBounds();
 
         var current = new SKPoint(rawX * scale, rawY * scale);
         var delta = current - _lastMousePosition;
@@ -41,36 +42,35 @@ public class PanHelper(IntPtr window, SKImage? image, int zoomPercentage)
 
     public void Clamp()
     {
-        var (imgW, imgH, bounds, _) = GetScaledImageAndDrawableBounds();
+        var (contentW, contentH, bounds, _) = GetScaledContentAndBounds();
 
-        if (imgW <= bounds.Width && imgH <= bounds.Height)
+        if (contentW <= bounds.Width && contentH <= bounds.Height)
         {
             CurrentOffset = SKPoint.Empty;
             return;
         }
 
-        var maxOffsetX = Math.Max(0, (imgW - bounds.Width) / 2);
-        var maxOffsetY = Math.Max(0, (imgH - bounds.Height) / 2);
+        var maxOffsetX = Math.Max(0, (contentW - bounds.Width) / 2);
+        var maxOffsetY = Math.Max(0, (contentH - bounds.Height) / 2);
 
         CurrentOffset = new SKPoint(
             Math.Clamp(CurrentOffset.X, -maxOffsetX, maxOffsetX),
             Math.Clamp(CurrentOffset.Y, -maxOffsetY, maxOffsetY)
         );
     }
-    
+
     public SKPoint GetOffsetForZoomAtCursor(SKPoint mouse, int newZoom)
     {
-        if (image == null || image.Handle == IntPtr.Zero)
+        if (composite.IsEmpty)
             return CurrentOffset;
-        
+
         var oldScale = _zoomPercentage / 100f;
         var newScale = newZoom / 100f;
 
-        var imgSize = new SKSize(image.Width, image.Height);
-        var imageDrawSizeOld = new SKSize(imgSize.Width * oldScale, imgSize.Height * oldScale);
-        var imageDrawSizeNew = new SKSize(imgSize.Width * newScale, imgSize.Height * newScale);
+        var imageDrawSizeOld = composite.ScaledContentSize(oldScale);
+        var imageDrawSizeNew = composite.ScaledContentSize(newScale);
 
-        var (_, _, bounds, _) = GetScaledImageAndDrawableBounds();
+        var (_, _, bounds, _) = GetScaledContentAndBounds();
 
         var imageTopLeftOld = new SKPoint(
             (bounds.Width - imageDrawSizeOld.Width) / 2 + CurrentOffset.X,
@@ -93,16 +93,21 @@ public class PanHelper(IntPtr window, SKImage? image, int zoomPercentage)
             (bounds.Height - imageDrawSizeNew.Height) / 2
         );
     }
-    
-    private (int scaledImageWidth, int scaledImageHeight, DrawableBounds bounds, float scale) GetScaledImageAndDrawableBounds()
+
+    private (int scaledWidth, int scaledHeight, DrawableBounds bounds, float scale) GetScaledContentAndBounds()
     {
         var bounds = GetDrawableSize(window, out var scale);
 
-        if (image == null || image.Handle == IntPtr.Zero)
+        var width = composite.ContentWidth;
+        var height = composite.ContentHeight;
+
+        if (width <= 0 || height <= 0)
             return (0, 0, bounds, scale);
 
-        var scaledWidth = (int)(image.Width * (_zoomPercentage / 100f));
-        var scaledHeight = (int)(image.Height * (_zoomPercentage / 100f));
+        var zoomScale = _zoomPercentage / 100f;
+        var scaledWidth = (int)(width * zoomScale);
+        var scaledHeight = (int)(height * zoomScale);
+
         return (scaledWidth, scaledHeight, bounds, scale);
     }
 }

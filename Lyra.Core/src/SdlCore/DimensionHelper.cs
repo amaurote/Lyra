@@ -1,4 +1,3 @@
-using Lyra.Common;
 using Lyra.Imaging.Data;
 using static SDL3.SDL;
 
@@ -33,7 +32,6 @@ public static class DimensionHelper
 
     public static int GetZoomToFitScreen(IntPtr window, float imageWidth, float imageHeight)
     {
-        Logger.Debug($"size: {imageWidth}x{imageHeight}");
         var bounds = GetDrawableSize(window, out _);
         var scale = MathF.Min(bounds.Width / imageWidth, bounds.Height / imageHeight);
         return (int)MathF.Round(scale * 100f);

@@ -71,7 +71,7 @@ public partial class SdlCore : IDisposable
             _composite = ImageStore.GetImage(currentPath);
             var preloadPaths = DirectoryNavigator.GetRange(PreloadDepth);
             ImageStore.Preload(preloadPaths);
-            _panHelper = new PanHelper(_window, _composite.Image, _zoomPercentage);
+            _panHelper = new PanHelper(_window, _composite, _zoomPercentage);
         }
 
         _renderer.SetComposite(_composite);
