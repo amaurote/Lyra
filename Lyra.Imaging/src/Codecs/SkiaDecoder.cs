@@ -3,7 +3,6 @@ using Lyra.Common;
 using Lyra.Common.SystemExtensions;
 using Lyra.Imaging.Data;
 using Lyra.Imaging.Pipeline;
-using MetadataExtractor;
 using SkiaSharp;
 using static System.Threading.Thread;
 
@@ -35,8 +34,7 @@ internal class SkiaDecoder : IImageDecoder
                 return composite;
             }
             
-            var parsedMetadata = ImageMetadataReader.ReadMetadata(path);
-            composite.ExifInfo = MetadataProcessor.ProcessMetadata(parsedMetadata);
+            composite.ExifInfo = MetadataProcessor.ParseMetadata(path);
 
             var info = codec.Info;
             var rowBytes = info.RowBytes;

@@ -59,7 +59,7 @@ public static class ImageFormat
     private static string NormalizeExtension(string extension)
     {
         if (string.IsNullOrWhiteSpace(extension))
-            throw new ArgumentException("Extension cannot be null or empty.", nameof(extension));
+            return string.Empty;
 
         extension = extension.Trim().ToLowerInvariant();
         return extension.StartsWith('.') ? extension : '.' + extension;

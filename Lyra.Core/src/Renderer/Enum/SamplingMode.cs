@@ -14,8 +14,5 @@ public enum SamplingMode
     Nearest,
 
     [Description("Anti-aliasing OFF")]
-    None,
-    
-    [Description("Disabled (resolution-independent)")]
-    Vector
+    None
 }

@@ -8,7 +8,7 @@ with a streamlined .NET architecture.
 ## Overview
 
 Lyra is a high-performance image viewer built with **SDL3** and **SkiaSharp**, designed for **speed, minimalism,
-and smooth navigation**. It provides a distraction-free way to preview and inspect image assets — ideal for creative
+and fluid navigation**. It provides a distraction-free way to preview and inspect image assets — ideal for creative
 professionals who use images as a core resource in their workflow, such as:
 
 - 2D/3D artists
@@ -104,6 +104,7 @@ modern image formats and fast rendering:
 |--------------------------|------------------------------------------------|---------------|
 | **SDL3-CS**              | Core graphics, input, and windowing            | zlib          |
 | **SkiaSharp**            | Hardware-accelerated 2D rendering              | BSD-3-Clause  |
+| **Svg.Skia**             | Scalable vector graphics rendering             | MIT           |
 | **LibHeifSharp**         | HEIF/HEIC format decoding                      | LGPL-3.0      |
 | **SixLabors.ImageSharp** | Support for TGA, TIFF, and legacy formats      | Apache 2.0    |
 | **MetadataExtractor**    | Extracts EXIF & image metadata                 | Apache 2.0    |
@@ -114,6 +115,7 @@ For more information, visit the relevant **repositories**:
 
 - [SDL3-CS](https://github.com/ethereal-developers-club/SDL3-CS)
 - [SkiaSharp](https://github.com/mono/SkiaSharp)
+- [Svg.Skia](https://github.com/wieslawsoltes/Svg.Skia)
 - [LibHeifSharp](https://github.com/0xC0000054/libheif-sharp)
 - [SixLabors.ImageSharp](https://github.com/SixLabors/ImageSharp)
 - [MetadataExtractor](https://github.com/drewnoakes/metadata-extractor-dotnet)
@@ -132,3 +134,9 @@ For more information, visit the relevant **repositories**:
 
 ---
 
+## TODO
+
+- ImageInfoOverlay drag & drop progress status
+- Jump to first / last image within the current dir (when images from multiple directories are loaded)
+- Quicker vector-image zooming (bigger step ??)
+- Bigger zoom step when a shift key is pressed ??

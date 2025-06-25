@@ -4,6 +4,8 @@ namespace Lyra.Imaging.Data;
 
 public class ExifInfo
 {
+    public static readonly ExifInfo Error = new();
+    
     public string Make = string.Empty;
     public string Model = string.Empty;
     public string Lens = string.Empty;
@@ -12,7 +14,7 @@ public class ExifInfo
     [Description("Exposure Time")]
     public string ExposureTime = string.Empty;
 
-    [Description("Apeture")]
+    [Description("Aperture")]
     public string FNumber = string.Empty;
 
     [Description("ISO")]
@@ -46,6 +48,11 @@ public class ExifInfo
 
     public string Software = string.Empty;
 
+    public bool IsValid()
+    {
+        return this != Error;
+    }
+    
     public bool HasData()
     {
         var fields = typeof(ExifInfo).GetFields();

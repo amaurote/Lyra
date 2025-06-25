@@ -5,9 +5,13 @@ project.lock.json
 *.pyc
 nupkg/
 
+dist/
+lib/
+packaging/
 publish/
 build.sh
 build-macos.sh
+publish.sh
 
 # Visual Studio Code
 .vscode/

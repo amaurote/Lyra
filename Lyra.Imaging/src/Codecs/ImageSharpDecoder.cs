@@ -2,7 +2,6 @@ using Lyra.Common;
 using Lyra.Common.SystemExtensions;
 using Lyra.Imaging.Data;
 using Lyra.Imaging.Pipeline;
-using MetadataExtractor;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SkiaSharp;
@@ -28,8 +27,7 @@ internal class ImageSharpDecoder : IImageDecoder
         var path = composite.FileInfo.FullName;
         Logger.Debug($"[ImageSharpDecoder] [Thread: {CurrentThread.GetNameOrId()}] Decoding: {path}");
         
-        var parsedMetadata = ImageMetadataReader.ReadMetadata(path);
-        composite.ExifInfo = MetadataProcessor.ProcessMetadata(parsedMetadata);
+        composite.ExifInfo = MetadataProcessor.ParseMetadata(path);
         
         try
         {

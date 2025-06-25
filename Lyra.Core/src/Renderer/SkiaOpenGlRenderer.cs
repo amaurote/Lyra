@@ -159,9 +159,14 @@ public partial class SkiaOpenGlRenderer : IRenderer
             CollectionCount = DirectoryNavigator.GetIndex().count,
             Zoom = _zoomPercentage,
             DisplayMode = _displayMode.Description(),
-            SamplingMode = (_composite?.IsVectorGraphics == true) ? SamplingMode.Vector.Description() : _samplingMode.Description(),
+            SamplingMode = GetSamplingModeDescription(),
             ShowExif = _infoMode == InfoMode.WithExif
         };
+    }
+    
+    private string GetSamplingModeDescription()
+    {
+        return _composite?.IsVectorGraphics == true ? "Disabled (resolution-independent)" : _samplingMode.Description();
     }
 
     public void OnDrawableSizeChanged(DrawableSizeChangedEvent e)
@@ -179,7 +184,7 @@ public partial class SkiaOpenGlRenderer : IRenderer
     public void ToggleSampling()
     {
         if (_composite is { IsVectorGraphics: false })
-            _samplingMode = (SamplingMode)(((int)_samplingMode + 1) % 4);
+            _samplingMode = (SamplingMode)(((int)_samplingMode + 1) % System.Enum.GetValues<SamplingMode>().Length);
     }
 
     public void ToggleBackground()

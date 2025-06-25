@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <AssemblyName>LyraViewer</AssemblyName>
     <OutputType>Exe</OutputType>
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -10,7 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="SDL3-CS" Version="3.2.16.1" />
+    <PackageReference Include="SDL3-CS" Version="3.2.16.3" />
     <PackageReference Include="SDL3-CS.Native" Version="3.2.16" />
     <PackageReference Include="SkiaSharp" Version="3.119.0" />
     <PackageReference Include="Svg.Skia" Version="3.0.3" />

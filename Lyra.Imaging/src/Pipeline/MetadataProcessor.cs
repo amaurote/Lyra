@@ -1,5 +1,6 @@
 using Lyra.Common;
 using Lyra.Imaging.Data;
+using MetadataExtractor;
 using MetadataExtractor.Formats.Exif;
 using MetadataExtractor.Formats.Heif;
 using MetadataExtractor.Formats.Icc;
@@ -13,7 +14,35 @@ namespace Lyra.Imaging.Pipeline;
 
 internal static class MetadataProcessor
 {
-    public static ExifInfo ProcessMetadata(IReadOnlyList<Directory> directories)
+    public static ExifInfo ParseMetadata(string path)
+    {
+        try
+        {
+            return ProcessMetadata(ImageMetadataReader.ReadMetadata(path));
+        }
+        catch (Exception e)
+        {
+            Logger.Warning($"[MetadataProcessor] Error parsing metadata from file: {path}");
+            Logger.Error($"[MetadataProcessor] Error parsing metadata: {e.Message}");
+            return ExifInfo.Error;
+        }
+    }
+
+    public static ExifInfo ParseMetadata(Stream stream, string path)
+    {
+        try
+        {
+            return ProcessMetadata(ImageMetadataReader.ReadMetadata(stream));
+        }
+        catch (Exception e)
+        {
+            Logger.Warning($"[MetadataProcessor] Error parsing metadata from file: {path}");
+            Logger.Error($"[MetadataProcessor] Error while parsing metadata: {e.Message}");
+            return ExifInfo.Error;
+        }
+    }
+
+    private static ExifInfo ProcessMetadata(IReadOnlyList<Directory> directories)
     {
         var exifInfo = ProcessBasic(directories);
         ProcessTypeSpecific(directories, exifInfo);
@@ -44,7 +73,7 @@ internal static class MetadataProcessor
         var colorSpaceExif = subIfd?.GetDescription(ExifDirectoryBase.TagColorSpace) ?? string.Empty;
         var colorSpaceIcc = icc?.GetDescription(IccDirectory.TagColorSpace) ?? string.Empty;
         exifInfo.ColorSpace = AssignValue(colorSpaceExif, colorSpaceIcc, Priority.Low);
-        
+
         exifInfo.IccProfile = icc?.GetDescription(IccDirectory.TagTagDesc) ?? string.Empty;
 
         exifInfo.GpsLatitude = gps?.GetDescription(GpsDirectory.TagLatitude) ?? string.Empty;

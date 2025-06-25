@@ -70,10 +70,15 @@ public class ImageInfoOverlay : IOverlay<(Composite? composite, ViewerState stat
             $"[System]        Graphics API: OpenGL  |  Sampling: {states.SamplingMode}"
         };
 
-        if (states.ShowExif)
+        if (states.ShowExif && composite.ExifInfo != null)
         {
             lines.AddRange(["", "", "", "[EXIF ↯]", ""]);
-            if (composite.ExifInfo?.HasData() == true)
+
+            if (!composite.ExifInfo.IsValid())
+            {
+                lines.Add("Failed to parse EXIF metadata.");
+            }
+            else if (composite.ExifInfo.HasData())
             {
                 var exifLines = composite.ExifInfo.ToLines();
                 lines.AddRange(exifLines);

@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using LibHeifSharp;
 using Lyra.Common;
 using SDL3;
+using SkiaSharp;
 
 namespace Lyra.Imaging;
 
@@ -30,6 +31,11 @@ internal static class NativeLibraryLoader
                 "SDL3", RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "SDL3.dll" :
                 RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "libSDL3.so" :
                 "libSDL3.dylib"
+            },
+            {
+                "SKIA", RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "libSkiaSharp.dll" :
+                RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "libSkiaSharp.so" :
+                "libSkiaSharp.dylib"
             },
             {
                 "LIBHEIF", RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "libheif.dll" :
@@ -85,13 +91,26 @@ internal static class NativeLibraryLoader
         NativeLibrary.SetDllImportResolver(typeof(SDL).Assembly, ResolveSdl);
         NativeLibrary.SetDllImportResolver(typeof(LibHeifInfo).Assembly, ResolveHeif);
         NativeLibrary.SetDllImportResolver(typeof(NativeLibraryLoader).Assembly, ResolveInterop);
+
+#if !DEBUG
+        NativeLibrary.SetDllImportResolver(typeof(SKImage).Assembly, ResolveSkia);
+#endif
     }
 
     private static IntPtr ResolveSdl(string libraryName, Assembly assembly, DllImportSearchPath? searchPath)
     {
         return libraryName switch
         {
-            "SDL3" or "SDL3.dll" or "libSDL3.so" => NativeLibrary.Load(PathDictionary["SDL3"]),
+            "SDL3" or "SDL3.dll" or "libSDL3.so" or "libSDL3.dylib" => NativeLibrary.Load(PathDictionary["SDL3"]),
+            _ => IntPtr.Zero
+        };
+    }
+    
+    private static IntPtr ResolveSkia(string libraryName, Assembly assembly, DllImportSearchPath? searchPath)
+    {
+        return libraryName switch
+        {
+            "libSkiaSharp" or "libSkiaSharp.dll" or "libSkiaSharp.so" or "libSkiaSharp.dylib" => NativeLibrary.Load(PathDictionary["SKIA"]),
             _ => IntPtr.Zero
         };
     }
@@ -100,7 +119,7 @@ internal static class NativeLibraryLoader
     {
         return libraryName switch
         {
-            "libheif" or "libheif.dll" or "libheif.so" => NativeLibrary.Load(PathDictionary["LIBHEIF"]),
+            "libheif" or "libheif.dll" or "libheif.so" or "libheif.dylib" => NativeLibrary.Load(PathDictionary["LIBHEIF"]),
             _ => IntPtr.Zero
         };
     }

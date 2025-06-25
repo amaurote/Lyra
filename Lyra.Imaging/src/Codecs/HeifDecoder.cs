@@ -3,7 +3,6 @@ using Lyra.Common;
 using Lyra.Common.SystemExtensions;
 using Lyra.Imaging.Data;
 using Lyra.Imaging.Pipeline;
-using MetadataExtractor;
 using SkiaSharp;
 using static System.Threading.Thread;
 
@@ -30,8 +29,7 @@ internal class HeifDecoder : IImageDecoder
                 if (exifData != null)
                 {
                     using var stream = new MemoryStream(exifData);
-                    var parsedMetadata = ImageMetadataReader.ReadMetadata(stream);
-                    composite.ExifInfo = MetadataProcessor.ProcessMetadata(parsedMetadata);
+                    composite.ExifInfo = MetadataProcessor.ParseMetadata(stream, path);
                 }
 
                 var width = decodedImage.Width;
