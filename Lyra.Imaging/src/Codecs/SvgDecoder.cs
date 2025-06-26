@@ -33,9 +33,9 @@ public class SvgDecoder : IImageDecoder
                 Logger.Debug("[SvgDecoder] Detected empty or invalid CullRect.");
 
             composite.Picture = picture;
-            Logger.Debug($"[SvgDecoder] CullRect bounds: {originalBounds}");
-
             composite.IsVectorGraphics = true;
+            Logger.Debug($"[SvgDecoder] CullRect bounds: {originalBounds}");
+            
             return composite;
         });
     }

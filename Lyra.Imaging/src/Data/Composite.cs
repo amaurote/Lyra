@@ -28,7 +28,7 @@ public class Composite(FileInfo fileInfo)
 
     // Getters
     public bool IsEmpty => (Image == null || Image.Handle == IntPtr.Zero) && Picture == null;
-    public float ContentWidth => ((IsVectorGraphics) ? Picture?.CullRect.Width : Image?.Width) ?? 0f;
-    public float ContentHeight => ((IsVectorGraphics) ? Picture?.CullRect.Height : Image?.Height) ?? 0f;
+    public float ContentWidth => (IsVectorGraphics ? Picture?.CullRect.Width : Image?.Width) ?? 0f;
+    public float ContentHeight => (IsVectorGraphics ? Picture?.CullRect.Height : Image?.Height) ?? 0f;
     public SKSize ScaledContentSize(float zoomScale) => new(ContentWidth * zoomScale, ContentHeight * zoomScale);
 }

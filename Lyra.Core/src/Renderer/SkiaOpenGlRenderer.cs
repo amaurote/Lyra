@@ -88,15 +88,21 @@ public partial class SkiaOpenGlRenderer : IRenderer
         if (_composite?.Image == null)
             return;
 
-        var imgWidth = _composite.Image.Width;
-        var imgHeight = _composite.Image.Height;
-
+        var image = _composite.Image;
         var imageScale = _zoomPercentage / 100f;
-        var drawWidth = imgWidth * imageScale;
-        var drawHeight = imgHeight * imageScale;
 
-        var left = (_windowWidth - drawWidth) / 2 + _offset.X;
-        var top = (_windowHeight - drawHeight) / 2 + _offset.Y;
+        var logicalWidth = _composite.ContentWidth;
+        var logicalHeight = _composite.ContentHeight;
+
+        var drawWidth = logicalWidth * imageScale;
+        var drawHeight = logicalHeight * imageScale;
+
+        var logicalWindowWidth = _windowWidth / _displayScale;
+        var logicalWindowHeight = _windowHeight / _displayScale;
+
+        var left = (logicalWindowWidth - drawWidth) / 2 + _offset.X / _displayScale;
+        var top = (logicalWindowHeight - drawHeight) / 2 + _offset.Y / _displayScale;
+
         var destRect = new SKRect(left, top, left + drawWidth, top + drawHeight);
 
         var sampling = _samplingMode switch
@@ -108,7 +114,11 @@ public partial class SkiaOpenGlRenderer : IRenderer
         };
 
         using var paint = new SKPaint();
-        canvas.DrawImage(_composite.Image, destRect, sampling, paint);
+
+        canvas.Save();
+        canvas.Scale(_displayScale); // logical → physical transform
+        canvas.DrawImage(image, destRect, sampling, paint);
+        canvas.Restore();
     }
 
     private SKSurface CreateSurface()
@@ -163,7 +173,7 @@ public partial class SkiaOpenGlRenderer : IRenderer
             ShowExif = _infoMode == InfoMode.WithExif
         };
     }
-    
+
     private string GetSamplingModeDescription()
     {
         return _composite?.IsVectorGraphics == true ? "Disabled (resolution-independent)" : _samplingMode.Description();

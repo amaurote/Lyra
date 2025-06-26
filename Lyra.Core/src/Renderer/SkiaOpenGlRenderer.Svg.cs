@@ -9,8 +9,8 @@ public partial class SkiaOpenGlRenderer
         var bounds = picture.CullRect;
         var zoomScale = _zoomPercentage / 100f;
 
-        var drawWidth = bounds.Width * zoomScale;
-        var drawHeight = bounds.Height * zoomScale;
+        var drawWidth = bounds.Width * zoomScale * _displayScale;
+        var drawHeight = bounds.Height * zoomScale * _displayScale;
 
         var left = (_windowWidth - drawWidth) / 2 + _offset.X;
         var top = (_windowHeight - drawHeight) / 2 + _offset.Y;
