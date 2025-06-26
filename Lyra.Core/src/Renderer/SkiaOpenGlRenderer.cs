@@ -11,7 +11,7 @@ using DisplayMode = Lyra.SdlCore.DisplayMode;
 
 namespace Lyra.Renderer;
 
-public partial class SkiaOpenGlRenderer : IRenderer
+public class SkiaOpenGlRenderer : IRenderer
 {
     private readonly IntPtr _glContext;
     private readonly GRContext _grContext;
@@ -89,22 +89,6 @@ public partial class SkiaOpenGlRenderer : IRenderer
             return;
 
         var image = _composite.Image;
-        var imageScale = _zoomPercentage / 100f;
-
-        var logicalWidth = _composite.ContentWidth;
-        var logicalHeight = _composite.ContentHeight;
-
-        var drawWidth = logicalWidth * imageScale;
-        var drawHeight = logicalHeight * imageScale;
-
-        var logicalWindowWidth = _windowWidth / _displayScale;
-        var logicalWindowHeight = _windowHeight / _displayScale;
-
-        var left = (logicalWindowWidth - drawWidth) / 2 + _offset.X / _displayScale;
-        var top = (logicalWindowHeight - drawHeight) / 2 + _offset.Y / _displayScale;
-
-        var destRect = new SKRect(left, top, left + drawWidth, top + drawHeight);
-
         var sampling = _samplingMode switch
         {
             SamplingMode.Linear => new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear),
@@ -113,11 +97,45 @@ public partial class SkiaOpenGlRenderer : IRenderer
             SamplingMode.Cubic or _ => new SKSamplingOptions(new SKCubicResampler()),
         };
 
-        using var paint = new SKPaint();
+        var logicalSize = new SKSize(_composite.ContentWidth, _composite.ContentHeight);
+
+        RenderCentered(canvas, logicalSize, c =>
+        {
+            var dest = new SKRect(0, 0, logicalSize.Width, logicalSize.Height);
+            c.DrawImage(image, dest, sampling);
+        });
+    }
+
+    private void RenderSvg(SKCanvas canvas, SKPicture picture)
+    {
+        var bounds = picture.CullRect;
+        var logicalSize = new SKSize(bounds.Width, bounds.Height);
+
+        RenderCentered(canvas, logicalSize, c =>
+        {
+            c.Translate(-bounds.Left, -bounds.Top); // normalize origin
+            c.DrawPicture(picture);
+        });
+    }
+
+    private void RenderCentered(SKCanvas canvas, SKSize logicalSize, Action<SKCanvas> drawContent)
+    {
+        var zoomScale = _zoomPercentage / 100f;
+
+        var drawWidth = logicalSize.Width * zoomScale;
+        var drawHeight = logicalSize.Height * zoomScale;
+
+        var logicalWindowWidth = _windowWidth / _displayScale;
+        var logicalWindowHeight = _windowHeight / _displayScale;
+
+        var left = (logicalWindowWidth - drawWidth) / 2 + _offset.X / _displayScale;
+        var top = (logicalWindowHeight - drawHeight) / 2 + _offset.Y / _displayScale;
 
         canvas.Save();
-        canvas.Scale(_displayScale); // logical → physical transform
-        canvas.DrawImage(image, destRect, sampling, paint);
+        canvas.Scale(_displayScale); // logical → physical space
+        canvas.Translate(left, top); // center the image
+        canvas.Scale(zoomScale); // zoom
+        drawContent(canvas);
         canvas.Restore();
     }
 
