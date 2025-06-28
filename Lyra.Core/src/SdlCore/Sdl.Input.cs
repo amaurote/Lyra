@@ -14,7 +14,9 @@ public partial class SdlCore
     private bool _isFullscreen;
     private bool _isPanning;
 
-    private const int ZoomStep = 10;
+    private const float ZoomFactor = 1.05f;
+    private const int MinZoom = 10;
+    private const int MaxZoom = 10000;
 
     private void InitializeInput()
     {
@@ -162,15 +164,15 @@ public partial class SdlCore
         _renderer.SetOffset(_panHelper.CurrentOffset);
     }
 
-    private void ZoomIn() => ApplyZoom(_zoomPercentage + ZoomStep);
-    private void ZoomOut() => ApplyZoom(_zoomPercentage - ZoomStep);
+    private void ZoomIn() => ApplyZoom((int)MathF.Round(_zoomPercentage * ZoomFactor, MidpointRounding.AwayFromZero));
+    private void ZoomOut() => ApplyZoom((int)MathF.Round(_zoomPercentage / ZoomFactor, MidpointRounding.AwayFromZero));
 
     private void ApplyZoom(int newZoom)
     {
         if (_composite == null || _composite.IsEmpty || _panHelper == null)
             return;
 
-        _zoomPercentage = ClampZoom(newZoom);
+        _zoomPercentage = Math.Clamp(newZoom, MinZoom, MaxZoom);
         _displayMode = _zoomPercentage == 100 ? DisplayMode.OriginalImageSize : DisplayMode.Free;
 
         _renderer.SetDisplayMode(_displayMode);
@@ -186,17 +188,16 @@ public partial class SdlCore
             return;
 
         _panHelper.UpdateZoom(_zoomPercentage);
-        var normalizedDirection = direction > 0 ? 1 : -1;
+        var newZoom = direction > 0
+            ? (int)MathF.Round(_zoomPercentage * ZoomFactor, MidpointRounding.AwayFromZero)
+            : (int)MathF.Round(_zoomPercentage / ZoomFactor, MidpointRounding.AwayFromZero);
 
-        // Get drawable size and scale (HiDPI-aware)
+        newZoom = Math.Clamp(newZoom, MinZoom, MaxZoom);
+        if (newZoom == _zoomPercentage)
+            return;
+
         DimensionHelper.GetDrawableSize(_window, out var scale);
         var mouse = new SKPoint(mouseX * scale, mouseY * scale);
-
-        // Calculate new zoom
-        var oldZoom = _zoomPercentage;
-        var newZoom = ClampZoom(oldZoom + normalizedDirection * ZoomStep);
-        if (newZoom == oldZoom)
-            return;
 
         var newOffset = _panHelper.GetOffsetForZoomAtCursor(mouse, newZoom);
 
@@ -257,11 +258,5 @@ public partial class SdlCore
 
         _panHelper.Clamp();
         _renderer.SetOffset(_panHelper.CurrentOffset);
-    }
-
-    private int ClampZoom(int value)
-    {
-        var max = _composite?.IsVectorGraphics == true ? 10000 : 1000;
-        return Math.Clamp(value, 10, max);
     }
 }

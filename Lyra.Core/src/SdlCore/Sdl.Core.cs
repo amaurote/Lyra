@@ -71,12 +71,12 @@ public partial class SdlCore : IDisposable
             _composite = ImageStore.GetImage(currentPath);
             var preloadPaths = DirectoryNavigator.GetRange(PreloadDepth);
             ImageStore.Preload(preloadPaths);
+            _displayMode = DimensionHelper.GetInitialDisplayMode(_window, _composite, out _zoomPercentage);
             _panHelper = new PanHelper(_window, _composite, _zoomPercentage);
         }
 
         _renderer.SetComposite(_composite);
         _renderer.SetOffset(SKPoint.Empty);
-        _displayMode = DimensionHelper.GetInitialDisplayMode(_window, _composite, out _zoomPercentage);
         _renderer.SetDisplayMode(_displayMode);
         _renderer.SetZoom(_zoomPercentage);
     }

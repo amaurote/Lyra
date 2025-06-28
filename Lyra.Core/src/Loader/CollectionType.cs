@@ -2,7 +2,7 @@ namespace Lyra.Loader;
 
 public enum CollectionType
 {
-    FullDirectoryCollection,
+    SingleDirectoryCollection,
     SingleDirectorySelection,
     MultiDirectorySelection,
     Undefined

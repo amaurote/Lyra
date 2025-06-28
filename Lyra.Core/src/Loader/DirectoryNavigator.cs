@@ -138,7 +138,7 @@ public static class DirectoryNavigator
         if (_imageList.Count > 0)
         {
             if (_singleDirectory && _anchorFile != null)
-                return CollectionType.FullDirectoryCollection;
+                return CollectionType.SingleDirectoryCollection;
             if (_singleDirectory && _anchorFile == null)
                 return CollectionType.SingleDirectorySelection;
             if (!_singleDirectory) 

@@ -33,11 +33,6 @@ internal static class NativeLibraryLoader
                 "libSDL3.dylib"
             },
             {
-                "SKIA", RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "libSkiaSharp.dll" :
-                RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "libSkiaSharp.so" :
-                "libSkiaSharp.dylib"
-            },
-            {
                 "LIBHEIF", RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "libheif.dll" :
                 RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "libheif.so" :
                 "libheif.dylib"
@@ -51,7 +46,14 @@ internal static class NativeLibraryLoader
                 "HDR", RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "libhdr_native.dll" :
                 RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "libhdr_native.so" :
                 "libhdr_native.dylib"
+            },
+#if !DEBUG
+            {
+                "SKIA", RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "libSkiaSharp.dll" :
+                RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "libSkiaSharp.so" :
+                "libSkiaSharp.dylib"
             }
+#endif
         };
 
         foreach (var (id, libName) in platformLibraries)
@@ -72,9 +74,7 @@ internal static class NativeLibraryLoader
         }
         else
         {
-            Logger.Info($"[NativeLibraryLoader] {libFilePath} not found. Attempting fallback.");
-            var fallbackPath = Path.Combine(LibPath, SystemName, libraryName); // Use predefined OS folder names
-            Logger.Info($"[NativeLibraryLoader] Fallback path: {fallbackPath}");
+            var fallbackPath = Path.Combine(LibPath, SystemName, libraryName);
             if (File.Exists(fallbackPath))
             {
                 PathDictionary[identifier] = fallbackPath;
@@ -105,7 +105,7 @@ internal static class NativeLibraryLoader
             _ => IntPtr.Zero
         };
     }
-    
+
     private static IntPtr ResolveSkia(string libraryName, Assembly assembly, DllImportSearchPath? searchPath)
     {
         return libraryName switch

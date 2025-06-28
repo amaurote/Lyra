@@ -36,11 +36,10 @@ internal class ImageLoader
         
         try
         {
-            var stopwatch = Stopwatch.StartNew();
-            
             var decoder = DecoderManager.GetDecoder(composite.ImageFormatType);
-            composite = await decoder.DecodeAsync(composite);
             
+            var stopwatch = Stopwatch.StartNew();
+            composite = await decoder.DecodeAsync(composite);
             stopwatch.Stop();
             
             if (!composite.IsEmpty)

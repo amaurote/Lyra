@@ -18,19 +18,19 @@ public class PanHelper(IntPtr window, Composite composite, int zoomPercentage)
 
     public void Start(float rawX, float rawY)
     {
-        var (_, _, _, scale) = GetScaledContentAndBounds();
+        var (_, _, _, scale) = GetZoomedContentAndBounds();
         _lastMousePosition = new SKPoint(rawX * scale, rawY * scale);
     }
 
     public bool CanPan()
     {
-        var (contentW, contentH, bounds, _) = GetScaledContentAndBounds();
-        return contentW > bounds.Width || contentH > bounds.Height;
+        var (contentW, contentH, bounds, scale) = GetZoomedContentAndBounds();
+        return contentW * scale > bounds.Width || contentH * scale > bounds.Height;
     }
 
     public void Move(float rawX, float rawY)
     {
-        var (_, _, _, scale) = GetScaledContentAndBounds();
+        var (_, _, _, scale) = GetZoomedContentAndBounds();
 
         var current = new SKPoint(rawX * scale, rawY * scale);
         var delta = current - _lastMousePosition;
@@ -42,16 +42,16 @@ public class PanHelper(IntPtr window, Composite composite, int zoomPercentage)
 
     public void Clamp()
     {
-        var (contentW, contentH, bounds, _) = GetScaledContentAndBounds();
+        var (contentW, contentH, bounds, scale) = GetZoomedContentAndBounds();
 
-        if (contentW <= bounds.Width && contentH <= bounds.Height)
+        if (contentW * scale <= bounds.Width && contentH * scale <= bounds.Height)
         {
             CurrentOffset = SKPoint.Empty;
             return;
         }
 
-        var maxOffsetX = Math.Max(0, (contentW - bounds.Width) / 2);
-        var maxOffsetY = Math.Max(0, (contentH - bounds.Height) / 2);
+        var maxOffsetX = Math.Max(0, (contentW * scale - bounds.Width) / 2);
+        var maxOffsetY = Math.Max(0, (contentH * scale - bounds.Height) / 2);
 
         CurrentOffset = new SKPoint(
             Math.Clamp(CurrentOffset.X, -maxOffsetX, maxOffsetX),
@@ -70,7 +70,7 @@ public class PanHelper(IntPtr window, Composite composite, int zoomPercentage)
         var imageDrawSizeOld = composite.ScaledContentSize(oldScale);
         var imageDrawSizeNew = composite.ScaledContentSize(newScale);
 
-        var (_, _, bounds, _) = GetScaledContentAndBounds();
+        var (_, _, bounds, _) = GetZoomedContentAndBounds();
 
         var imageTopLeftOld = new SKPoint(
             (bounds.Width - imageDrawSizeOld.Width) / 2 + CurrentOffset.X,
@@ -94,7 +94,7 @@ public class PanHelper(IntPtr window, Composite composite, int zoomPercentage)
         );
     }
 
-    private (int scaledWidth, int scaledHeight, DrawableBounds bounds, float scale) GetScaledContentAndBounds()
+    private (int scaledWidth, int scaledHeight, DrawableBounds bounds, float scale) GetZoomedContentAndBounds()
     {
         var bounds = GetDrawableSize(window, out var scale);
 
