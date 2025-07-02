@@ -9,8 +9,7 @@ Lyra is a high-performance, minimalist image viewer designed for speed, fluid na
 - 2D/3D artists
 - Game developers
 - Environment designers
-- Asset pipeline engineers
-- Graphic designers and other advanced users
+- And other advanced users
 
 Built on SDL3 and SkiaSharp, Lyra is optimized for browsing large collections of texture maps, HDRIs, baked assets, and other images exported from tools like Blender, Quixel Bridge, and modern DCC pipelines.
 
