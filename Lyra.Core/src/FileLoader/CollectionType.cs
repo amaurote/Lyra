@@ -1,4 +1,4 @@
-namespace Lyra.Loader;
+namespace Lyra.FileLoader;
 
 public enum CollectionType
 {

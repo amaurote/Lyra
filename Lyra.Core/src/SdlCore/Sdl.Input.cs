@@ -1,5 +1,5 @@
 using Lyra.Common;
-using Lyra.Loader;
+using Lyra.FileLoader;
 using SkiaSharp;
 using static SDL3.SDL;
 
@@ -75,7 +75,7 @@ public partial class SdlCore
 
     private void FirstImage()
     {
-        if (DirectoryNavigator.GetIndex().index != 1)
+        if (!DirectoryNavigator.IsFirst())
         {
             DirectoryNavigator.MoveToFirst();
             LoadImage();
@@ -84,8 +84,7 @@ public partial class SdlCore
 
     private void LastImage()
     {
-        var position = DirectoryNavigator.GetIndex();
-        if (position.index != position.count)
+        if (!DirectoryNavigator.IsLast())
         {
             DirectoryNavigator.MoveToLast();
             LoadImage();

@@ -1,6 +1,6 @@
 using Lyra.Common;
 
-namespace Lyra.Loader;
+namespace Lyra.FileLoader;
 
 public static class FilePathProcessor
 {

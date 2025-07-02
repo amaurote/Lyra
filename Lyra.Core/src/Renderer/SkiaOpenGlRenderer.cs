@@ -1,6 +1,6 @@
 using Lyra.Common.SystemExtensions;
+using Lyra.FileLoader;
 using Lyra.Imaging.Data;
-using Lyra.Loader;
 using Lyra.Renderer.Enum;
 using Lyra.Renderer.Overlay;
 using Lyra.SdlCore;
@@ -180,11 +180,15 @@ public class SkiaOpenGlRenderer : IRenderer
 
     private ViewerState GetViewerState()
     {
+        var navigation = DirectoryNavigator.GetNavigation();
+        
         return new ViewerState
         {
             CollectionType = DirectoryNavigator.GetCollectionType().Description(),
-            CollectionIndex = DirectoryNavigator.GetIndex().index,
-            CollectionCount = DirectoryNavigator.GetIndex().count,
+            CollectionIndex = navigation.CollectionIndex,
+            CollectionCount = navigation.CollectionCount,
+            DirectoryIndex = navigation.DirectoryIndex,
+            DirectoryCount = navigation.DirectoryCount,
             Zoom = _zoomPercentage,
             DisplayMode = _displayMode.Description(),
             SamplingMode = GetSamplingModeDescription(),

@@ -1,6 +1,6 @@
 using Lyra.Common;
 
-namespace Lyra.Loader;
+namespace Lyra.FileLoader;
 
 public static class DirectoryNavigator
 {
@@ -100,6 +100,16 @@ public static class DirectoryNavigator
         return _imageList.Count > 0 && _currentIndex > 0;
     }
 
+    public static bool IsFirst()
+    {
+        return _imageList.Count > 0 && _currentIndex == 0;
+    }
+
+    public static bool IsLast()
+    {
+        return _imageList.Count > 0 && _currentIndex == _imageList.Count - 1;
+    }
+
     /// <summary>
     /// Returns a slice of image file paths centered on the current image,
     /// including the current image and up to <paramref name="depth"/> images
@@ -130,9 +140,47 @@ public static class DirectoryNavigator
 
         return paths.ToArray();
     }
+    
+    public static Navigation GetNavigation()
+    {
+        var navigation = new Navigation()
+        {
+            CollectionCount = _imageList.Count,
+            CollectionIndex = _currentIndex + 1,
+            DirectoryCount = null,
+            DirectoryIndex = null
+        };
 
-    public static (int index, int count) GetIndex() => (_currentIndex + 1, _imageList.Count);
+        if (GetCollectionType() == CollectionType.MultiDirectorySelection &&
+            _currentIndex >= 0 &&
+            _currentIndex < _imageList.Count)
+        {
+            var currentFile = _imageList[_currentIndex];
+            var currentDir = Path.GetDirectoryName(currentFile);
 
+            if (!string.IsNullOrEmpty(currentDir))
+            {
+                var normalizedCurrentDir = Path.GetFullPath(currentDir).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+                var imagesInDir = _imageList
+                    .Select(f => new { File = f, Dir = Path.GetDirectoryName(f) })
+                    .Where(x => 
+                        !string.IsNullOrEmpty(x.Dir) &&
+                        string.Equals(
+                            Path.GetFullPath(x.Dir).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar),
+                            normalizedCurrentDir,
+                            StringComparison.Ordinal))
+                    .Select(x => x.File)
+                    .ToList();
+
+                navigation.DirectoryCount = imagesInDir.Count;
+                navigation.DirectoryIndex = imagesInDir.IndexOf(currentFile) + 1;
+            }
+        }
+
+        return navigation;
+    }
+    
     public static CollectionType GetCollectionType()
     {
         if (_imageList.Count > 0)
@@ -146,5 +194,13 @@ public static class DirectoryNavigator
         }
 
         return CollectionType.Undefined;
+    }
+
+    public record struct Navigation
+    {
+        public int CollectionCount;
+        public int CollectionIndex;
+        public int? DirectoryIndex;
+        public int? DirectoryCount;
     }
 }

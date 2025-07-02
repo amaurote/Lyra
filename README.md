@@ -1,15 +1,10 @@
 # Lyra Viewer
 
-Lyra Viewer is built primarily using **SDL3** and **SkiaSharp**, combining the speed and flexibility of native rendering
-with a streamlined .NET architecture.
-
 ---
 
 ## Overview
 
-Lyra is a high-performance image viewer built with **SDL3** and **SkiaSharp**, designed for **speed, minimalism,
-and fluid navigation**. It provides a distraction-free way to preview and inspect image assets — ideal for creative
-professionals who use images as a core resource in their workflow, such as:
+Lyra is a high-performance, minimalist image viewer designed for speed, fluid navigation, and precision, ideal for creative professionals who rely on images as a core resource in their workflow — such as:
 
 - 2D/3D artists
 - Game developers
@@ -17,8 +12,19 @@ professionals who use images as a core resource in their workflow, such as:
 - Asset pipeline engineers
 - Graphic designers and other advanced users
 
-Lyra is optimized for quickly browsing large collections of texture maps, HDRIs, baked image assets, and previews
-exported from tools like **Blender**, **Quixel Bridge**, and other content creation pipelines.
+Built on SDL3 and SkiaSharp, Lyra is optimized for browsing large collections of texture maps, HDRIs, baked assets, and other images exported from tools like Blender, Quixel Bridge, and modern DCC pipelines.
+
+---
+
+## Key Features
+
+- Fast navigation through large directories of images or texture assets.
+- **SVG** support for previewing scalable vector assets.
+- **Adjustable background** modes to improve visibility of transparent images, with light, dark, or checkerboard backgrounds.
+- Sampling toggle, useful for **pixel-perfect** graphics or UI assets.
+- **EXIF metadata** display for viewing embedded image information.
+- Zoom-to-cursor and panning for intuitive inspection at any scale.
+- Wide support for modern and legacy image formats.
 
 ---
 
@@ -26,7 +32,7 @@ exported from tools like **Blender**, **Quixel Bridge**, and other content creat
 
 > _Note: Crossed-out formats are not implemented yet._
 
-### **Common Texture Formats (Essential)**
+### Common Texture Formats (Essential)
 
 | Format           | Description                                                                   |
 |------------------|-------------------------------------------------------------------------------|
@@ -37,35 +43,35 @@ exported from tools like **Blender**, **Quixel Bridge**, and other content creat
 | `.tif` / `.tiff` | High-quality textures, often 16/32-bit, used in VFX.                          |
 | `.bmp`           | Rare but used in older or internal pipelines.                                 |
 
-### **Modern / Web-Friendly Formats**
+### Modern / Web-Friendly Formats
 
 | Format                      | Description                                                              |
 |-----------------------------|--------------------------------------------------------------------------|
 | `.webp`                     | Lightweight format with alpha support, used for previews and thumbnails. |
 | `.heif` / `.heic` / `.avif` | High Efficiency format common on macOS/iOS systems.                      |
 
-### **High Dynamic Range Formats**
+### High Dynamic Range Formats
 
 | Format | Description                                                                |
 |--------|----------------------------------------------------------------------------|
 | `.exr` | OpenEXR format for HDR data (e.g. height, displacement, environment maps). |
 | `.hdr` | Radiance HDR format, used in lighting environments and skies.              |
 
-### **Compressed / GPU-Friendly Formats**
+### Compressed / GPU-Friendly Formats
 
 | Format               | Description                                                             |
 |----------------------|-------------------------------------------------------------------------|
 | ~~`.dds`~~           | ~~DirectDraw Surface, used in real-time engines (DXT/BC compression).~~ |
 | ~~`.ktx` / `.ktx2`~~ | ~~Modern GPU-optimized format for real-time textures.~~                 |
 
-### **Vector Formats / Specialized Formats**
+### Vector / Specialized Formats
 
 | Format     | Description                                        |
 |------------|----------------------------------------------------|
 | `.svg`     | Scalable vector graphics for masks or UI overlays. |
 | ~~`.psd`~~ | ~~Photoshop files (preview-only support).~~        |
 
-### **Minor Formats**
+### Minor Formats
 
 | Format      | Description                                                |
 |-------------|------------------------------------------------------------|
@@ -75,13 +81,14 @@ exported from tools like **Blender**, **Quixel Bridge**, and other content creat
 
 ---
 
-## **Keyboard Shortcuts & Controls**
+## Keyboard Shortcuts & Controls
 
 | Key            | Action                                       |
 |----------------|----------------------------------------------|
 | `←` / `→`      | Previous / Next image                        |
 | `Home` / `End` | First / Last image                           |
 | `⌘ ←` / `⌘ →`  | First / Last image (macOS)                   |
+|                |                                              |
 | `+` / `-`      | Zoom in / Zoom out                           |
 | `Mouse Wheel`  | Zoom at cursor position                      |
 | `0`            | Toggle **Fit to Screen** / **Original Size** |
@@ -91,27 +98,26 @@ exported from tools like **Blender**, **Quixel Bridge**, and other content creat
 | `I`            | Toggle image information overlay             |
 | `Esc`          | Exit application                             |
 
-- **Drag & Drop:** Open a file or directory by dragging it into Lyra Viewer.
+- Drag & Drop: Open a file or directory by dragging it into Lyra Viewer.
 
 ---
 
-## **Prerequisites & Dependencies**
+## Prerequisites & Dependencies
 
-**Lyra Viewer** is built with **.NET Runtime 9.0** and integrates several high-performance libraries designed to handle
-modern image formats and fast rendering:
+Lyra Viewer is built with .NET Runtime 9.0 and integrates several high-performance libraries designed to handle modern image formats and fast rendering:
 
 | Library                  | Purpose                                        | License       |
 |--------------------------|------------------------------------------------|---------------|
-| **SDL3-CS**              | Core graphics, input, and windowing            | zlib          |
-| **SkiaSharp**            | Hardware-accelerated 2D rendering              | BSD-3-Clause  |
-| **Svg.Skia**             | Scalable vector graphics rendering             | MIT           |
-| **LibHeifSharp**         | HEIF/HEIC format decoding                      | LGPL-3.0      |
-| **SixLabors.ImageSharp** | Support for TGA, TIFF, and legacy formats      | Apache 2.0    |
-| **MetadataExtractor**    | Extracts EXIF & image metadata                 | Apache 2.0    |
-| **OpenEXR**              | High dynamic range (HDR) image decoding (.exr) | BSD-3-Clause  |
-| **rgbe**                 | Radiance HDR (.hdr) image decoding             | Public Domain |
+| SDL3-CS                  | Core graphics, input, and windowing            | zlib          |
+| SkiaSharp                | Hardware-accelerated 2D rendering              | BSD-3-Clause  |
+| Svg.Skia                 | Scalable vector graphics rendering             | MIT           |
+| LibHeifSharp             | HEIF/HEIC format decoding                      | LGPL-3.0      |
+| SixLabors.ImageSharp     | Support for TGA, TIFF, and legacy formats      | Apache 2.0    |
+| MetadataExtractor        | Extracts EXIF & image metadata                 | Apache 2.0    |
+| OpenEXR                  | High dynamic range (HDR) image decoding (.exr) | BSD-3-Clause  |
+| rgbe                     | Radiance HDR (.hdr) image decoding             | Public Domain |
 
-For more information, visit the relevant **repositories**:
+For more information, visit the relevant repositories:
 
 - [SDL3-CS](https://github.com/ethereal-developers-club/SDL3-CS)
 - [SkiaSharp](https://github.com/mono/SkiaSharp)
@@ -136,7 +142,6 @@ For more information, visit the relevant **repositories**:
 
 ## TODO
 
-- ImageInfoOverlay drag & drop progress status
-- Jump to first / last image within the current dir (when images from multiple directories are loaded)
-- Quicker vector-image zooming (bigger step ??)
-- Bigger zoom step when a shift key is pressed ??
+- Drag & drop state + progress
+- Jump to first / last image within the current directory (when images from multiple directories are loaded)
+- Composite state handling (Loading, Failed, etc.)

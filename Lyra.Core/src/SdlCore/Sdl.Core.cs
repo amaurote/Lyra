@@ -1,7 +1,7 @@
 using Lyra.Common;
+using Lyra.FileLoader;
 using Lyra.Imaging;
 using Lyra.Imaging.Data;
-using Lyra.Loader;
 using Lyra.Renderer;
 using SkiaSharp;
 using static SDL3.SDL;
