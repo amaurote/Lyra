@@ -23,7 +23,15 @@ public static class FilePathProcessor
 
         var supported = allFiles
             .Where(file => ImageFormat.IsSupported(Path.GetExtension(file)))
-            .OrderBy(f => f, PathComparer)
+            .Select(full => new
+            {
+                Full = full,
+                Dir = Path.GetDirectoryName(full) ?? string.Empty,
+                Name = Path.GetFileName(full)
+            })
+            .OrderBy(x => x.Dir, PathComparer)
+            .ThenBy(x => x.Name, PathComparer)
+            .Select(x => x.Full)
             .ToList();
         
         var uniqueDirectories = supported
