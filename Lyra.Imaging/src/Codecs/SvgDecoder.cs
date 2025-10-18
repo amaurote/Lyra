@@ -10,12 +10,13 @@ public class SvgDecoder : IImageDecoder
 {
     public bool CanDecode(ImageFormatType format) => format is ImageFormatType.Svg;
 
-    public async Task<Composite> DecodeAsync(Composite composite)
+    public async Task DecodeAsync(Composite composite, CancellationToken ct)
     {
         var path = composite.FileInfo.FullName;
+        composite.DecoderName = GetType().Name;
         Logger.Debug($"[SkiaDecoder] [Thread: {CurrentThread.GetNameOrId()}] Decoding: {path}");
 
-        return await Task.Run(() =>
+        await Task.Run(() =>
         {
             var svg = new SKSvg();
             svg.Load(path);
@@ -34,7 +35,6 @@ public class SvgDecoder : IImageDecoder
 
             composite.Picture = picture;
             composite.IsVectorGraphics = true;
-            Logger.Debug($"[SvgDecoder] CullRect bounds: {originalBounds}");
             
             return composite;
         });

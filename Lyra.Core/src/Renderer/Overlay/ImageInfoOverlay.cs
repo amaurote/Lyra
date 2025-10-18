@@ -1,35 +1,33 @@
-using Lyra.Common.SystemExtensions;
 using Lyra.Imaging.Data;
 using Lyra.SdlCore;
 using SkiaSharp;
 
 namespace Lyra.Renderer.Overlay;
 
-public class ImageInfoOverlay : IOverlay<(Composite? composite, ViewerState states)>
+public partial class ImageInfoOverlay : IOverlay<(Composite? composite, ViewerState states)>
 {
-    private readonly SKPaint _textPaint = new()
-    {
-        Color = SKColors.White,
-        IsAntialias = true
-    };
-
-    private readonly SKPaint _extrasPaint = new()
-    {
-        Color = SKColors.Goldenrod,
-        IsAntialias = true
-    };
-
-    private readonly SKPaint _failedPaint = new()
-    {
-        Color = SKColors.Firebrick,
-        IsAntialias = true
-    };
-
     public float Scale { get; set; }
     public SKFont? Font { get; set; }
 
+    private readonly SKPaint _textPaint = new() { Color = SKColors.White, IsAntialias = true };
+    private readonly SKPaint _extrasPaint = new() { Color = SKColors.Goldenrod, IsAntialias = true };
+    private readonly SKPaint _failedPaint = new() { Color = SKColors.Firebrick, IsAntialias = true };
+    private readonly SKPaint _debugPaint = new() { Color = SKColors.SeaGreen, IsAntialias = true };
+
+    private readonly Dictionary<char, SKPaint> _tagToPaint;
+
+    private const int BasePadding = 13;
+    private const int BaseLineHeight = 7;
+
     public ImageInfoOverlay()
     {
+        _tagToPaint = new Dictionary<char, SKPaint>
+        {
+            ['e'] = _extrasPaint,
+            ['f'] = _failedPaint,
+            ['d'] = _debugPaint
+        };
+
         ReloadFont();
     }
 
@@ -40,107 +38,74 @@ public class ImageInfoOverlay : IOverlay<(Composite? composite, ViewerState stat
 
     public void Render(SKCanvas canvas, DrawableBounds drawableBounds, SKColor textPaint, (Composite? composite, ViewerState states) data)
     {
-        if (Font == null)
-            return;
-
-        if (data.composite == null)
-            return;
+        if (Font == null || data.composite == null) return;
 
         _textPaint.Color = textPaint;
 
-        var padding = 13 * Scale;
-        var lineHeight = Font.Size + (7 * Scale);
-
+        var padding = BasePadding * Scale;
+        var lineHeight = Font.Size + (BaseLineHeight * Scale);
         var textY = padding + Font.Size;
-        foreach (var line in PrepareInfoLines(data.composite, data.states))
+
+        foreach (var line in BuildLines(data.composite, data.states))
         {
-            var x = padding;
-            var i = 0;
-            var currentPaint = _textPaint;
-
-            while (i < line.Length)
-            {
-                var (tag, tagLength) = TryParseTag(line, i);
-                if (tag != null)
-                {
-                    currentPaint = tag switch
-                    {
-                        "e" => _extrasPaint,
-                        "f" => _failedPaint,
-                        "/" => _textPaint,
-                        _ => currentPaint
-                    };
-                    i += tagLength;
-                    continue;
-                }
-
-                var nextTagIdx = line.IndexOf('<', i);
-                var end = nextTagIdx == -1 ? line.Length : nextTagIdx;
-
-                var textSpan = line[i..end];
-                canvas.DrawText(textSpan, x, textY, SKTextAlign.Left, Font, currentPaint);
-                x += Font.MeasureText(textSpan, currentPaint);
-
-                i = end;
-            }
-
+            DrawTaggedLine(canvas, line, padding, textY);
             textY += lineHeight;
         }
     }
 
-    private static (string? tag, int length) TryParseTag(string line, int index)
+    private void DrawTaggedLine(SKCanvas canvas, string line, float xStart, float y)
     {
-        if (line[index] != '<' || index + 2 >= line.Length)
-            return (null, 0);
+        if (Font == null)
+            return;
 
-        if (line[index + 2] == '>' && (line[index + 1] is 'e' or 'f' or '/'))
-            return (line[index + 1].ToString(), 3);
+        var x = xStart;
+        var i = 0;
+        var paint = _textPaint;
 
-        return (null, 0);
-    }
-
-    private List<string> PrepareInfoLines(Composite composite, ViewerState states)
-    {
-        var fileInfo = composite.FileInfo;
-        var fileSize = fileInfo.Length switch
+        while (i < line.Length)
         {
-            >= 2 * 1024 * 1024 => $"{Math.Round(fileInfo.Length / (1024.0 * 1024), 1)} MB",
-            >= 1024 => $"{Math.Round(fileInfo.Length / 1024.0)} kB",
-            _ => $"{fileInfo.Length} bytes"
-        };
-
-        var width = composite.Image?.Width ?? composite.Picture?.CullRect.Width ?? 0;
-        var height = composite.Image?.Height ?? composite.Picture?.CullRect.Height ?? 0;
-
-        var dirNav = string.Empty;
-        if (states is { DirectoryCount: not null, DirectoryIndex: not null })
-            dirNav = $" <e>({states.DirectoryIndex}/{states.DirectoryCount})</>";
-
-        var lines = new List<string>
-        {
-            $"[Collection]    {states.CollectionType}  |  Dir: {composite.FileInfo.DirectoryName}/",
-            $"[File]          {states.CollectionIndex}/{states.CollectionCount}{dirNav}  |  {fileInfo.Name}  |  {fileSize}",
-            $"[Image]         {composite.ImageFormatType.Description()}  |  {width}x{height}"
-            + (composite.IsGrayscale ? "  |  Greyscale" : ""),
-            $"[Displaying]    Zoom: {states.Zoom}%  |  Display Mode: {states.DisplayMode}",
-            $"[System]        Graphics API: OpenGL  |  Sampling: {states.SamplingMode}"
-        };
-
-        if (states.ShowExif && composite.ExifInfo != null)
-        {
-            lines.AddRange(["", "", "", "[EXIF ↯]", ""]);
-
-            if (!composite.ExifInfo.IsValid())
+            var tag = TryParseTag(line, i);
+            if (tag.HasValue)
             {
-                lines.Add("<f>Failed to parse EXIF metadata.</>");
+                if (tag.Value == '/')
+                    paint = _textPaint;
+                else if (_tagToPaint.TryGetValue(tag.Value, out var mapped))
+                    paint = mapped;
+
+                i += 3; // advance over "<x>"
+                continue;
             }
-            else if (composite.ExifInfo.HasData())
+
+            var nextTagIdx = line.IndexOf('<', i);
+            if (nextTagIdx == i)
             {
-                var exifLines = composite.ExifInfo.ToLines();
-                lines.AddRange(exifLines);
+                const string literal = "<";
+                canvas.DrawText(literal, x, y, SKTextAlign.Left, Font, paint);
+                x += Font.MeasureText(literal, paint);
+                i += 1;
+                continue;
+            }
+
+            var end = nextTagIdx == -1 ? line.Length : nextTagIdx;
+            if (end > i)
+            {
+                var chunk = line[i..end];
+                canvas.DrawText(chunk, x, y, SKTextAlign.Left, Font, paint);
+                x += Font.MeasureText(chunk, paint);
+                i = end;
             }
         }
+    }
 
-        return lines;
+    private static char? TryParseTag(string line, int index)
+    {
+        if (index + 2 >= line.Length || line[index] != '<')
+            return null;
+
+        var middle = line[index + 1];
+        if (line[index + 2] != '>')
+            return null;
+
+        return middle is 'e' or 'f' or 'd' or '/' ? middle : null;
     }
 }

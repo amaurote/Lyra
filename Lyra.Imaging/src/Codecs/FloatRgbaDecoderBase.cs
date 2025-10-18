@@ -12,21 +12,19 @@ internal abstract class FloatRgbaDecoderBase : IImageDecoder
     protected abstract bool LoadPixels(string path, out IntPtr ptr, out int width, out int height);
     protected abstract void FreePixels(IntPtr ptr);
 
-    public async Task<Composite> DecodeAsync(Composite composite)
+    public async Task DecodeAsync(Composite composite, CancellationToken ct)
     {
-        var filename = composite.FileInfo.Name;
+        composite.DecoderName = GetType().Name;
         var path = composite.FileInfo.FullName;
-        Logger.Debug($"[{GetType().Name}] [Thread: {CurrentThread.GetNameOrId()}] Decoding: {filename}");
+        Logger.Debug($"[{GetType().Name}] [Thread: {CurrentThread.GetNameOrId()}] Decoding: {path}");
 
-        return await Task.Run(() =>
+        ct.ThrowIfCancellationRequested();
+        await Task.Run(() =>
         {
             var success = LoadPixels(path, out var ptr, out var width, out var height);
-
-            Logger.Debug($"[{GetType().Name}] LoadPixels returned: success={success}, ptr=0x{ptr:X}, width={width}, height={height}");
-
             if (!success || ptr == IntPtr.Zero)
             {
-                Logger.Warning($"[{GetType().Name}] Failed to load native pixels or got null pointer for: {filename}");
+                Logger.Warning($"[{GetType().Name}] Failed to load native pixels or got null pointer for: {path}");
                 return composite;
             }
 
@@ -52,7 +50,6 @@ internal abstract class FloatRgbaDecoderBase : IImageDecoder
             {
                 if (ptr != IntPtr.Zero)
                 {
-                    Logger.Debug($"[{GetType().Name}] Freeing pixels: {filename}, ptr=0x{ptr:X}");
                     FreePixels(ptr);
                 }
             }

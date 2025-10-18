@@ -7,5 +7,5 @@ internal interface IImageDecoder
 {
     bool CanDecode(ImageFormatType format);
     
-    Task<Composite> DecodeAsync(Composite composite);
+    Task DecodeAsync(Composite composite, CancellationToken ct);
 }

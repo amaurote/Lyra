@@ -12,12 +12,13 @@ internal class HeifDecoder : IImageDecoder
 {
     public bool CanDecode(ImageFormatType format) => format == ImageFormatType.Heif;
 
-    public async Task<Composite> DecodeAsync(Composite composite)
+    public async Task DecodeAsync(Composite composite, CancellationToken ct)
     {
         var path = composite.FileInfo.FullName;
+        composite.DecoderName = GetType().Name;
         Logger.Debug($"[HeifDecoder] [Thread: {CurrentThread.GetNameOrId()}] Decoding: {path}");
 
-        return await Task.Run(() =>
+        await Task.Run(() =>
         {
             try
             {

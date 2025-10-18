@@ -155,7 +155,12 @@ public class SkiaOpenGlRenderer : IRenderer
             _imageInfoOverlay.Render(canvas, bounds, textColor, (_composite, GetViewerState()));
 
         if (_composite?.Image == null && _composite?.Picture == null)
-            _centeredOverlay.Render(canvas, bounds, textColor, "No image");
+        {
+            if (_composite?.State == CompositeState.Loading)
+                _centeredOverlay.Render(canvas, bounds, textColor, "Loading...");
+            else
+                _centeredOverlay.Render(canvas, bounds, textColor, "No image");
+        }
     }
 
     private void DrawCheckerboardPattern(SKCanvas canvas)

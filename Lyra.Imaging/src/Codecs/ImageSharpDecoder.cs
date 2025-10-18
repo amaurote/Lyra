@@ -22,9 +22,10 @@ internal class ImageSharpDecoder : IImageDecoder
     //     or ImageFormatType.Tiff
     //     or ImageFormatType.Webp;
 
-    public async Task<Composite> DecodeAsync(Composite composite)
+    public async Task DecodeAsync(Composite composite, CancellationToken ct)
     {
         var path = composite.FileInfo.FullName;
+        composite.DecoderName = GetType().Name;
         Logger.Debug($"[ImageSharpDecoder] [Thread: {CurrentThread.GetNameOrId()}] Decoding: {path}");
         
         composite.ExifInfo = MetadataProcessor.ParseMetadata(path);
@@ -47,12 +48,10 @@ internal class ImageSharpDecoder : IImageDecoder
             }
 
             composite.Image = SKImage.FromBitmap(bitmap);
-            return composite;
         }
         catch (Exception)
         {
             Logger.Warning($"[ImageSharpDecoder] Image could not be loaded: {path}");
-            return composite;
         }
     }
 }

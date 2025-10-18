@@ -143,4 +143,3 @@ For more information, visit the relevant repositories:
 
 - Drag & drop state + progress
 - Jump to first / last image within the current directory (when images from multiple directories are loaded)
-- Composite state handling (Loading, Failed, etc.)

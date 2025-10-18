@@ -1,8 +1,6 @@
-using System.Runtime.InteropServices;
 using Lyra.Common;
 using Lyra.Common.SystemExtensions;
 using Lyra.Imaging.Data;
-using Lyra.Imaging.Pipeline;
 using SkiaSharp;
 using static System.Threading.Thread;
 
@@ -10,53 +8,48 @@ namespace Lyra.Imaging.Codecs;
 
 internal class SkiaDecoder : IImageDecoder
 {
-    public bool CanDecode(ImageFormatType format) => format 
-        is ImageFormatType.Bmp 
+    public bool CanDecode(ImageFormatType format) => format
+        is ImageFormatType.Bmp
         or ImageFormatType.Ico
         or ImageFormatType.Jfif
         or ImageFormatType.Jpeg
         or ImageFormatType.Png
         or ImageFormatType.Webp;
 
-    public async Task<Composite> DecodeAsync(Composite composite)
+    public async Task DecodeAsync(Composite composite, CancellationToken ct)
     {
+        await Task.Yield();
+
         var path = composite.FileInfo.FullName;
+        composite.DecoderName = GetType().Name;
         Logger.Debug($"[SkiaDecoder] [Thread: {CurrentThread.GetNameOrId()}] Decoding: {path}");
-        
-        return await Task.Run(() =>
+
+        ct.ThrowIfCancellationRequested();
+
+        await using var file = new FileStream(
+            path,
+            FileMode.Open,
+            FileAccess.Read,
+            FileShare.Read,
+            bufferSize: 64 * 1024,
+            options: FileOptions.SequentialScan);
+
+        using var bitmap = SKBitmap.Decode(file);
+        if (bitmap is null)
         {
-            using var stream = File.OpenRead(path);
-            using var codec = SKCodec.Create(stream);
+            Logger.Warning("[SkiaDecoder] SKBitmap is null.");
+            return;
+        }
 
-            if (codec == null)
-            {
-                Logger.Warning("[SkiaDecoder] SKCodec could not be created");
-                return composite;
-            }
-            
-            composite.ExifInfo = MetadataProcessor.ParseMetadata(path);
+        ct.ThrowIfCancellationRequested();
 
-            var info = codec.Info;
-            var rowBytes = info.RowBytes;
-            var size = info.Height * rowBytes;
-            var pixels = Marshal.AllocHGlobal(size);
-            
-            try
-            {
-                var result = codec.GetPixels(info, pixels);
-                if (result is SKCodecResult.Success or SKCodecResult.IncompleteInput)
-                {
-                    composite.Image = SKImage.FromPixelCopy(info, pixels, rowBytes);
-                    return composite;
-                }
-            }
-            finally
-            {
-                Marshal.FreeHGlobal(pixels);
-            }
+        var image = SKImage.FromBitmap(bitmap);
+        if (image is null)
+        {
+            Logger.Warning("[SkiaDecoder] SKImage is null.");
+            return;
+        }
 
-            Logger.Warning("[SkiaDecoder] Decoding failed with codec result other than Success or IncompleteInput");
-            return composite;
-        });
+        composite.Image = image;
     }
 }
