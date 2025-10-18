@@ -29,7 +29,7 @@ public class SkiaOpenGlRenderer : IRenderer
 
     private Composite? _composite;
     private SKPoint _offset = SKPoint.Empty;
-    private DisplayMode _displayMode = DisplayMode.OriginalImageSize;
+    private DisplayMode _displayMode = DisplayMode.Undefined;
 
     public SkiaOpenGlRenderer(IntPtr window)
     {

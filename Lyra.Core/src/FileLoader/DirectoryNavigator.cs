@@ -27,7 +27,7 @@ public static class DirectoryNavigator
             _currentDirectory = Path.GetDirectoryName(path) ?? throw new ArgumentException("[DirectoryNavigator] Invalid path!", nameof(path));
         }
 
-        var files = FilePathProcessor.ProcessImagePaths([_currentDirectory], out _singleDirectory);
+        var files = FilePathProcessor.ProcessImagePaths([_currentDirectory], false, out _singleDirectory);
         SetImageList(files, _anchorFile);
         Logger.Info($"[DirectoryNavigator] {_imageList.Count} images in directory.");
     }
@@ -35,7 +35,7 @@ public static class DirectoryNavigator
     public static void LoadCollection(List<string> paths)
     {
         _anchorFile = null;
-        var files = FilePathProcessor.ProcessImagePaths(paths, out _singleDirectory);
+        var files = FilePathProcessor.ProcessImagePaths(paths, true, out _singleDirectory);
         SetImageList(files, _anchorFile);
         Logger.Info($"[DirectoryNavigator] {_imageList.Count} files in collection.");
     }

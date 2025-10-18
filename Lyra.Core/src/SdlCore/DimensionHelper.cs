@@ -10,7 +10,7 @@ public static class DimensionHelper
         zoomPercentage = 100;
 
         if (composite == null || composite.IsEmpty)
-            return DisplayMode.OriginalImageSize;
+            return DisplayMode.Undefined;
 
         var drawableBounds = GetDrawableSize(window, out var displayScale);
 

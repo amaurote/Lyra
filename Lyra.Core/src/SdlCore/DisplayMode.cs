@@ -11,5 +11,7 @@ public enum DisplayMode
     FitToScreen, 
     
     [Description("Free")]
-    Free
+    Free,
+    
+    Undefined
 }

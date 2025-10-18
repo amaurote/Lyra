@@ -6,7 +6,7 @@ public static class FilePathProcessor
 {
     private static readonly StringComparer PathComparer = OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
 
-    public static List<string> ProcessImagePaths(List<string> paths, out bool singleDirectory)
+    public static List<string> ProcessImagePaths(List<string> paths, bool recurseSubdirs, out bool singleDirectory)
     {
         var allFiles = paths
             .Select(Path.GetFullPath)
@@ -15,7 +15,7 @@ public static class FilePathProcessor
                 if (File.Exists(path))
                     return [path];
                 else if (Directory.Exists(path))
-                    return GetAllFiles(path);
+                    return GetAllFiles(path, recurseSubdirs);
                 else
                     return [];
             })
@@ -47,11 +47,12 @@ public static class FilePathProcessor
         return supported;
     }
 
-    private static IEnumerable<string> GetAllFiles(string directory)
+    private static IEnumerable<string> GetAllFiles(string directory, bool recurseSubdirs)
     {
+        var searchOption = recurseSubdirs ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
         try
         {
-            return Directory.EnumerateFiles(directory, "*", SearchOption.AllDirectories);
+            return Directory.EnumerateFiles(directory, "*", searchOption);
         }
         catch (Exception ex)
         {

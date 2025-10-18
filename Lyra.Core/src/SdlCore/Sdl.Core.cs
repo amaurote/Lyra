@@ -17,7 +17,7 @@ public partial class SdlCore : IDisposable
 
     private Composite? _composite;
     private int _zoomPercentage = 100;
-    private DisplayMode _displayMode = DisplayMode.OriginalImageSize;
+    private DisplayMode _displayMode = DisplayMode.Undefined;
 
     private const int PreloadDepth = 3;
     private const int CleanupSafeRange = 4;
@@ -86,8 +86,28 @@ public partial class SdlCore : IDisposable
         while (_running)
         {
             HandleEvents();
+            RecalculateDisplayModeIfNecessary();
             _renderer.Render();
             GLSwapWindow(_window);
+        }
+    }
+
+    private void RecalculateDisplayModeIfNecessary()
+    {
+        if (_composite == null || _panHelper == null)
+            return;
+
+        if (!_composite.IsEmpty && _displayMode == DisplayMode.Undefined)
+        {
+            _displayMode = DimensionHelper.GetInitialDisplayMode(_window, _composite, out _zoomPercentage);
+
+            _renderer.SetDisplayMode(_displayMode);
+            _renderer.SetZoom(_zoomPercentage);
+
+            _panHelper.UpdateZoom(_zoomPercentage);
+            _panHelper.CurrentOffset = SKPoint.Empty;
+            _panHelper.Clamp();
+            _renderer.SetOffset(_panHelper.CurrentOffset);
         }
     }
 

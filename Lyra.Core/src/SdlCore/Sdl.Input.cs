@@ -142,7 +142,7 @@ public partial class SdlCore
         if (_composite == null || _panHelper == null)
             return;
 
-        if (_displayMode == DisplayMode.Free)
+        if (_displayMode is DisplayMode.Free or DisplayMode.Undefined)
             _displayMode = DimensionHelper.GetInitialDisplayMode(_window, _composite, out _zoomPercentage);
         else if (_zoomPercentage == 100)
         {
