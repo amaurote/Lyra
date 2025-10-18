@@ -53,8 +53,6 @@ EXR_API bool load_exr_rgba(const char *path, float **out_pixels, int *width, int
             std::lock_guard<std::mutex> lock(exr_alloc_mutex);
             exr_allocated_ptrs.insert(*out_pixels);
         }
-        printf("[C++] Allocated %zu bytes at %p\n", sizeof(float) * w * h * 4, *out_pixels);
-        fflush(stdout);
 
         for (int y = 0; y < h; ++y) {
             for (int x = 0; x < w; ++x) {
@@ -92,8 +90,6 @@ EXR_API void free_exr_pixels(float *ptr) {
             fflush(stdout);
         } else {
             exr_allocated_ptrs.erase(ptr);
-            printf("[C++] Freeing pointer %p\n", ptr);
-            fflush(stdout);
             free(ptr);
         }
     }

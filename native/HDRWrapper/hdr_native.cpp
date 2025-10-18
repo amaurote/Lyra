@@ -52,8 +52,6 @@ HDR_API bool load_hdr_rgba(const char *path, float **out_pixels, int *width, int
         std::lock_guard<std::mutex> lock(hdr_alloc_mutex);
         hdr_allocated_ptrs.insert(buffer);
     }
-    printf("[C++] Allocated %zu bytes at %p\n", sizeof(float) * totalPixels * 4, buffer);
-    fflush(stdout);
 
     float *rgb = (float *) malloc(sizeof(float) * totalPixels * 3);
     if (!rgb) {
@@ -108,8 +106,6 @@ HDR_API void free_hdr_pixels(float *ptr) {
             fflush(stdout);
         } else {
             hdr_allocated_ptrs.erase(ptr);
-            printf("[C++] Freeing pointer %p\n", ptr);
-            fflush(stdout);
             free(ptr);
         }
     }

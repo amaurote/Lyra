@@ -25,8 +25,14 @@ static class Program
 
     private static void LogSetup()
     {
+        
+#if DEBUG
+        Logger.SetLogDebugMode(true);
         Logger.SetLogStrategy(Logger.LogStrategy.Both);
+#else
         Logger.SetLogDebugMode(false);
+        Logger.SetLogStrategy(Logger.LogStrategy.File);
+#endif
         Logger.ClearLog();
     }
 }
