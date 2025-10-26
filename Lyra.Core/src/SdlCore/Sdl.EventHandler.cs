@@ -104,6 +104,8 @@ public partial class SdlCore
 
         LoadImage();
         _currentDroppedPaths.Clear();
+        
+        RaiseWindow(_window);  
     }
 
     private void OnWindowResized()
