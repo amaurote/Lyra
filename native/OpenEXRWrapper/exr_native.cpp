@@ -1,10 +1,12 @@
 #include <OpenEXR/ImfArray.h>
 #include <OpenEXR/ImfRgba.h>
 #include <OpenEXR/ImfRgbaFile.h>
-#include <unordered_set>
-#include <mutex>
-#include <cstring>
+#include <OpenEXR/ImfThreading.h>
 #include <cstdio>
+#include <cstring>
+#include <mutex>
+#include <thread>
+#include <unordered_set>
 
 #ifdef _WIN32
 #define EXR_API __declspec(dllexport)
@@ -19,16 +21,21 @@
 #endif
 
 static THREAD_LOCAL char last_exr_error[512] = "";
-static std::unordered_set<void*> exr_allocated_ptrs;
+static std::unordered_set<void *> exr_allocated_ptrs;
 static std::mutex exr_alloc_mutex;
 
 extern "C" {
 
-EXR_API const char* get_last_exr_error() {
-    return last_exr_error;
-}
+EXR_API const char *get_last_exr_error() { return last_exr_error; }
 
 EXR_API bool load_exr_rgba(const char *path, float **out_pixels, int *width, int *height) {
+    static std::once_flag exr_init_flag;
+    std::call_once(exr_init_flag, []() {
+        unsigned n = std::thread::hardware_concurrency();
+        Imf::setGlobalThreadCount(n ? static_cast<int>(n) : 1);
+        printf("[EXR] Using %u threads for OpenEXR\n", n);
+    });
+
     try {
         Imf::RgbaInputFile file(path);
         Imath::Box2i dw = file.dataWindow();
@@ -43,7 +50,7 @@ EXR_API bool load_exr_rgba(const char *path, float **out_pixels, int *width, int
         file.setFrameBuffer(&pixels[0][0] - dw.min.x - dw.min.y * w, 1, w);
         file.readPixels(dw.min.y, dw.max.y);
 
-        *out_pixels = (float*) malloc(sizeof(float) * w * h * 4);
+        *out_pixels = (float *) malloc(sizeof(float) * w * h * 4);
         if (!*out_pixels) {
             snprintf(last_exr_error, sizeof(last_exr_error), "Failed to allocate memory for EXR output buffer.");
             return false;
@@ -66,7 +73,7 @@ EXR_API bool load_exr_rgba(const char *path, float **out_pixels, int *width, int
 
         last_exr_error[0] = '\0';
         return true;
-    } catch (const std::exception& ex) {
+    } catch (const std::exception &ex) {
         snprintf(last_exr_error, sizeof(last_exr_error), "EXR exception: %s", ex.what());
     } catch (...) {
         snprintf(last_exr_error, sizeof(last_exr_error), "Unknown EXR exception.");

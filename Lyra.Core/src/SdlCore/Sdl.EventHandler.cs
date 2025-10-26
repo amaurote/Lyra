@@ -100,7 +100,7 @@ public partial class SdlCore
         if (_currentDroppedPaths.Count == 1)
             DirectoryNavigator.SearchImages(_currentDroppedPaths[0]);
         else
-            DirectoryNavigator.LoadCollection(_currentDroppedPaths);
+            DirectoryNavigator.SearchImages(_currentDroppedPaths);
 
         LoadImage();
         _currentDroppedPaths.Clear();
