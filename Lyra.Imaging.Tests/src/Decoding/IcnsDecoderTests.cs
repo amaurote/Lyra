@@ -252,7 +252,7 @@ public class IcnsDecoderTests
             new IcnsDecoder().DecodeAsync(composite, CancellationToken.None).GetAwaiter().GetResult();
 
             var set = Assert.IsType<VariantRasterContent>(composite.Content);
-            var held = ((RasterContent)set.Active).Image;
+            var held = Assert.IsType<RasterContent>(set.Active).Image;
 
             set.Select(1);
 

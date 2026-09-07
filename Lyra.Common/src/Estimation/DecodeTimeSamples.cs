@@ -4,7 +4,7 @@ using Tomlyn;
 using Tomlyn.Model;
 using Tomlyn.Parsing;
 
-namespace Lyra.Common;
+namespace Lyra.Common.Estimation;
 
 /// <summary>
 /// A rolling history of decode durations, bucketed by format and file size, persisted as TOML.

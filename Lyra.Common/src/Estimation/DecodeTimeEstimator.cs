@@ -1,4 +1,4 @@
-namespace Lyra.Common;
+namespace Lyra.Common.Estimation;
 
 public static class DecodeTimeEstimator
 {

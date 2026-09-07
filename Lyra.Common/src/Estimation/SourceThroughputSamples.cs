@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 
-namespace Lyra.Common;
+namespace Lyra.Common.Estimation;
 
 /// <summary>How long fetching a file from some storage is expected to take.</summary>
 /// <param name="LatencyMs">Fixed cost per file, before any bytes move. Dominates small files on a share.</param>

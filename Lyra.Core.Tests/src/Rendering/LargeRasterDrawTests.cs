@@ -1,4 +1,5 @@
 using Lyra.Imaging.Content;
+using Lyra.Imaging.Content.Tiling;
 using Lyra.Renderer.Drawing;
 using SkiaSharp;
 using Xunit;

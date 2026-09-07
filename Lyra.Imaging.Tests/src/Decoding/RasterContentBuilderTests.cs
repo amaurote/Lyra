@@ -1,4 +1,5 @@
 using Lyra.Imaging.Content;
+using Lyra.Imaging.Content.Tiling;
 using Lyra.Imaging.Decoding.Support;
 using SkiaSharp;
 using Xunit;
@@ -96,8 +97,8 @@ public class RasterContentBuilderTests
         var large = (RasterLargeContent)content;
 
         var imageSize = new SKSize(width, height);
-        var marked = Single(large.TileSource!.GetTiles(SKRect.Create(4096, 2048, 2048, 2048), imageSize));
-        var plain = Single(large.TileSource!.GetTiles(SKRect.Create(0, 0, 2048, 2048), imageSize));
+        var marked = Single(large.TileSource!.GetTiles(SKRect.Create(4096, 2048, 2048, 2048), imageSize, 1f));
+        var plain = Single(large.TileSource!.GetTiles(SKRect.Create(0, 0, 2048, 2048), imageSize, 1f));
 
         Assert.Equal(SKColors.Red, CentrePixel(marked.Image));
         Assert.Equal(SKColors.Black, CentrePixel(plain.Image));
@@ -113,8 +114,8 @@ public class RasterContentBuilderTests
         var large = (RasterLargeContent)content;
         var imageSize = new SKSize(AtBudgetEdge, AtBudgetEdge + 1);
 
-        var corner = large.TileSource!.GetTiles(SKRect.Create(0, 0, 100, 100), imageSize).Count();
-        var everything = large.TileSource!.GetTiles(SKRect.Create(0, 0, AtBudgetEdge, AtBudgetEdge + 1), imageSize).Count();
+        var corner = large.TileSource!.GetTiles(SKRect.Create(0, 0, 100, 100), imageSize, 1f).Count();
+        var everything = large.TileSource!.GetTiles(SKRect.Create(0, 0, AtBudgetEdge, AtBudgetEdge + 1), imageSize, 1f).Count();
 
         Assert.Equal(1, corner);
         Assert.True(everything > corner, $"the full view returned {everything} tiles, no more than one corner");
@@ -134,7 +135,7 @@ public class RasterContentBuilderTests
         Assert.Equal(large.TilesTotal, large.TilesReady);
 
         var everything = large.TileSource!
-            .GetTiles(SKRect.Create(0, 0, AtBudgetEdge, AtBudgetEdge + 1), new SKSize(AtBudgetEdge, AtBudgetEdge + 1))
+            .GetTiles(SKRect.Create(0, 0, AtBudgetEdge, AtBudgetEdge + 1), new SKSize(AtBudgetEdge, AtBudgetEdge + 1), 1f)
             .Count();
         
         Assert.Equal(large.TilesTotal, everything);

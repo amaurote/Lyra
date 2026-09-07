@@ -1,5 +1,5 @@
-using Lyra.Common;
 using Lyra.Imaging.Content;
+using Lyra.Imaging.Content.Tiling;
 using Lyra.Imaging.Decoding.Support;
 using Lyra.Renderer.Backends;
 using SkiaSharp;
@@ -142,7 +142,7 @@ public class SkiaCompositeContentDrawer : ICompositeContentDrawer
         // Safety: if there's no preview, rely on tiles.
         if (preview == null)
         {
-            DrawTiles(canvas, composite, rasterLarge, tileSource, visibleFullRect, sampling, surface);
+            DrawTiles(canvas, composite, rasterLarge, tileSource, visibleFullRect, sampling, surface, zoomScale * displayScale);
             return;
         }
 
@@ -163,12 +163,12 @@ public class SkiaCompositeContentDrawer : ICompositeContentDrawer
             return;
 
         var fullSize = new SKSize(composite.LogicalWidth, composite.LogicalHeight);
-        var tileBytes = tileSource.VisibleByteSize(visibleFullRect, fullSize);
+        var tileBytes = tileSource.VisibleByteSize(visibleFullRect, fullSize, screenPpfu);
 
         if (!TilesFitBudget(tileBytes, sampling.Mipmap != SKMipmapMode.None, TileTextureBudgetBytes))
             return;
 
-        DrawTiles(canvas, composite, rasterLarge, tileSource, visibleFullRect, sampling, surface);
+        DrawTiles(canvas, composite, rasterLarge, tileSource, visibleFullRect, sampling, surface, screenPpfu);
     }
 
     /// <summary>
@@ -192,12 +192,12 @@ public class SkiaCompositeContentDrawer : ICompositeContentDrawer
         return cost <= budgetBytes;
     }
     
-    private static void DrawTiles(SKCanvas canvas, Composite composite, RasterLargeContent rasterLarge, ITileSource tileSource, SKRect visibleFullRect, SKSamplingOptions sampling, SurfaceProfile surface)
+    private static void DrawTiles(SKCanvas canvas, Composite composite, RasterLargeContent rasterLarge, ITileSource tileSource, SKRect visibleFullRect, SKSamplingOptions sampling, SurfaceProfile surface, float pixelsPerFullUnit)
     {
         var fullSize = new SKSize(composite.LogicalWidth, composite.LogicalHeight);
         var whitePoint = rasterLarge.TileWhitePoint;
 
-        foreach (var tile in tileSource.GetTiles(visibleFullRect, fullSize))
+        foreach (var tile in tileSource.GetTiles(visibleFullRect, fullSize, pixelsPerFullUnit))
         {
             if (whitePoint is not { } measured)
             {

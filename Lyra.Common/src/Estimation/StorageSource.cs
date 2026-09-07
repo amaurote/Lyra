@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 
-namespace Lyra.Common;
+namespace Lyra.Common.Estimation;
 
 /// <summary>
 /// Which storage a file lives on, as a key that groups files that will read at the same speed.

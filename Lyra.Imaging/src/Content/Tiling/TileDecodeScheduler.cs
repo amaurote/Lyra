@@ -1,6 +1,6 @@
 using SkiaSharp;
 
-namespace Lyra.Imaging.Content;
+namespace Lyra.Imaging.Content.Tiling;
 
 /// <summary>
 /// Produces a decode priority for tiled images. Currently, yields a band (tileY) order

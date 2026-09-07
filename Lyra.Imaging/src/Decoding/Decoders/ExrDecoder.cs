@@ -17,7 +17,7 @@ internal class ExrDecoder : FloatRgbaDecoderBase
         int width, height;
         ExrNative.ExrInfo info;
 
-        if (ExrNative.MemoryLoadAvailable && NativeFileBuffer.ShouldBuffer(composite.FileInfo.Length))
+        if (ExrNative.MemoryLoadAvailable && NativeFileBuffer.ShouldBuffer(composite.FileSizeBytes ?? 0))
         {
             using var data = NativeFileBuffer.Read(path, ct, out var readMs, composite.ReportTransferred);
             composite.CompleteTransfer((long)data.Length, readMs);

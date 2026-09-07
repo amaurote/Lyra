@@ -1,4 +1,5 @@
 using Lyra.Common;
+using Lyra.Common.Estimation;
 using Lyra.Common.SystemExtensions;
 using Lyra.DuplicateStatusProvider;
 using Lyra.FileLoader.Store;
@@ -229,23 +230,23 @@ public sealed class DebugSection : IUISection
             var composite = state.Composite;
             _stateValue.Text = composite.State.Description();
             _decoderValue.Text = composite.DecoderName ?? "-";
-            _timeEstValue.Text = Formatters.MsToStr(composite.DecodeTimeEstimated);
-            _timeCompleteValue.Text = Formatters.MsToStr(composite.LoadTimeComplete);
+            _timeEstValue.Text = Formatters.MsToStr(composite.Timing.DecodeEstimateMs);
+            _timeCompleteValue.Text = Formatters.MsToStr(composite.Timing.CompleteMs);
 
-            _timeTransferRow.Present = composite.TransferMeasured;
-            _timeDecodeRow.Present = composite.TransferMeasured;
+            _timeTransferRow.Present = composite.Timing.TransferMeasured;
+            _timeDecodeRow.Present = composite.Timing.TransferMeasured;
 
-            if (composite.TransferMeasured)
+            if (composite.Timing.TransferMeasured)
             {
                 _timeTransferValue.Text = FormatTransfer(composite);
-                _timeDecodeValue.Text = Formatters.MsToStr(composite.DecodeTimeMs);
+                _timeDecodeValue.Text = Formatters.MsToStr(composite.Timing.DecodeMs);
             }
 
             _sourceRow.Present = true;
             _transferEstRow.Present = true;
             var path = composite.FileInfo.FullName;
             _sourceValue.Text = StorageSource.RootFor(path);
-            _transferEstValue.Text = FormatTransferEstimate(SourceThroughputEstimator.EstimateTransfer(path), composite.TransferBytesTotal);
+            _transferEstValue.Text = FormatTransferEstimate(SourceThroughputEstimator.EstimateTransfer(path), composite.Timing.TransferBytesTotal);
         }
 
         var app = state.AppStates;
@@ -327,8 +328,8 @@ public sealed class DebugSection : IUISection
     
     internal static string FormatTransfer(Composite composite)
     {
-        var ms = composite.TransferTimeMs;
-        var bytes = composite.TransferBytesRead;
+        var ms = composite.Timing.TransferMs;
+        var bytes = composite.Timing.TransferBytesRead;
         var text = Formatters.MsToStr(ms);
 
         // Below a millisecond the rate is division noise, not a measurement worth printing.

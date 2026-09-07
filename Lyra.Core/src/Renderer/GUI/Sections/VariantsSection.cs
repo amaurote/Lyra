@@ -13,9 +13,19 @@ public sealed class VariantsSection : IUISection, IDisposable
 {
     private readonly Collapsible _collapsible;
     private readonly ListView<ImageVariant> _list;
+    private readonly VStack _body;
 
     private IReadOnlyList<ImageVariant>? _lastVariants;
     private int _lastActive = -1;
+
+    private readonly ValueSlider _jump;
+
+    /// <summary>
+    /// Set while the slider is being moved to follow the selection, so that doing so does not read
+    /// back as the user having moved it. Without it, syncing the slider re-selects the page that
+    /// caused the sync.
+    /// </summary>
+    private bool _syncingJump;
 
     public Collapsible Collapsible => _collapsible;
 
@@ -37,19 +47,40 @@ public sealed class VariantsSection : IUISection, IDisposable
         };
 
         _list.Picked += OnPicked;
+        _list.Virtualized = true;
+
+        _body = new VStack
+        {
+            HorizontalSize = SizeMode.Expand,
+            VerticalSize = SizeMode.Flexible,
+            Spacing = 4f
+        };
+
+        _jump = new ValueSlider(1, 2, 1)
+        {
+            HorizontalSize = SizeMode.Expand,
+            Present = false,
+            Padding = new Padding(0, 15, 0, 0)
+        };
+
+        _jump.ValueChanged += OnJumpChanged;
+
+        _body.AddComponents(_jump, _list);
 
         _collapsible = new Collapsible("VARIANTS")
             {
                 HorizontalSize = SizeMode.Expand,
                 Present = false
             }
-            .Child(_list);
+            .Child(_body);
     }
 
-    public void Refresh(UIState state)
+    internal ValueSlider Jump => _jump;
+
+    public void Refresh(UIState state) => Refresh(state.Composite?.Content as VariantRasterContent);
+
+    internal void Refresh(VariantRasterContent? set)
     {
-        // The variant set is a property of the content, not of the document.
-        var set = state.Composite?.Content as VariantRasterContent;
         var variants = set?.Variants;
 
         if (variants is null || variants.Count == 0)
@@ -66,21 +97,63 @@ public sealed class VariantsSection : IUISection, IDisposable
         }
 
         _collapsible.Present = true;
+        _collapsible.Title = set!.GroupLabel;
 
         if (!ReferenceEquals(variants, _lastVariants))
         {
             _lastVariants = variants;
             _lastActive = -1;
-            _list.UpdateData([..variants]);
+            _list.UpdateData([.. variants]);
+            RebuildJump(set);
         }
-        
-        var active = set!.ActiveIndex;
+
+        var active = set.ActiveIndex;
         if (active != _lastActive)
         {
             _lastActive = active;
             var target = variants[active];
             _list.Locate(v => ReferenceEquals(v, target));
+
+            SyncJump(active);
         }
+    }
+
+    private void RebuildJump(VariantRasterContent set)
+    {
+        _jump.Present = set.IsLong;
+
+        if (!set.IsLong)
+            return;
+
+        _syncingJump = true;
+        _jump.SetRange(1, set.Variants.Count);
+        _jump.Value = set.ActiveIndex + 1;
+        _syncingJump = false;
+    }
+
+    private void SyncJump(int active)
+    {
+        if (!_jump.Present)
+            return;
+
+        _syncingJump = true;
+        _jump.Value = active + 1;
+        _syncingJump = false;
+    }
+
+    private void OnJumpChanged(int oneBased)
+    {
+        if (_syncingJump || _lastVariants is null)
+            return;
+
+        var index = Math.Clamp(oneBased - 1, 0, _lastVariants.Count - 1);
+        if (index == _lastActive)
+            return;
+
+        _lastActive = index;
+        _list.Locate(v => ReferenceEquals(v, _lastVariants[index]));
+
+        VariantSelected?.Invoke(index);
     }
 
     private void OnPicked(ImageVariant variant)
@@ -90,12 +163,14 @@ public sealed class VariantsSection : IUISection, IDisposable
             return;
 
         _lastActive = index;
+        SyncJump(index);
+
         VariantSelected?.Invoke(index);
     }
 
     /// <summary>Applies a pick. Internal so tests can drive it without a real click.</summary>
     internal void Select(ImageVariant variant) => OnPicked(variant);
-    
+
     private static int IndexOf(IReadOnlyList<ImageVariant>? variants, ImageVariant variant)
     {
         if (variants is null)
@@ -137,11 +212,14 @@ public sealed class VariantsSection : IUISection, IDisposable
             .Children(
                 titleColumn,
                 new Label(Formatters.SizeToStr(variant.ByteSize))
-                { Color = Palette.Muted });
+                    { Color = Palette.Muted });
     }
 
     public void Dispose()
     {
+        _jump.ValueChanged -= OnJumpChanged;
+        _jump.Dispose();
+
         _list.Picked -= OnPicked;
         _list.Dispose();
     }

@@ -1,4 +1,4 @@
-using Lyra.Common;
+using Lyra.Common.Estimation;
 using Lyra.Imaging.ConstraintsProvider;
 using Lyra.Imaging.Content;
 using Lyra.Imaging.Loading;

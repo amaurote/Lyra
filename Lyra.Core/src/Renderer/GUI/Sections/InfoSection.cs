@@ -139,9 +139,9 @@ public sealed class InfoSection : IUISection
         {
             _dirNavLabel.Present = false;
         }
-
+        
         _fileNameLabel.Text = fileInfo.Name;
-        _fileSizeLabel.Text = Formatters.SizeToStr(fileInfo.Length);
+        _fileSizeLabel.Text = Formatters.SizeToStr(composite.FileSizeBytes);
 
         // Image row
         _formatLabel.Text = composite.ImageFormatType.Description();

@@ -1,7 +1,8 @@
 using Lyra.Common;
 using Lyra.Imaging.ConstraintsProvider;
-using Lyra.Imaging.Content;
+using Lyra.Imaging.Content.Tiling;
 using SkiaSharp;
+using Lyra.Imaging.Content;
 
 namespace Lyra.Imaging.Decoding.Support;
 
@@ -188,9 +189,11 @@ internal static class RasterContentBuilder
     {
         public long ByteSize => source.ByteCount;
 
-        public IEnumerable<RasterTile> GetTiles(SKRect visibleFullRect, SKSize imageSize) => tiles.GetTiles(visibleFullRect, imageSize);
+        public IEnumerable<RasterTile> GetTiles(SKRect visibleFullRect, SKSize imageSize, float pixelsPerFullUnit) =>
+            tiles.GetTiles(visibleFullRect, imageSize, pixelsPerFullUnit);
         
-        public long VisibleByteSize(SKRect visibleFullRect, SKSize imageSize) => tiles.VisibleByteSize(visibleFullRect, imageSize);
+        public long VisibleByteSize(SKRect visibleFullRect, SKSize imageSize, float pixelsPerFullUnit) =>
+            tiles.VisibleByteSize(visibleFullRect, imageSize, pixelsPerFullUnit);
 
         public void Dispose()
         {

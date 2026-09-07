@@ -83,15 +83,27 @@ cannot be parallelised, so performance over a NAS or remote share will always be
 
 ## Key Features
 
-- Fast navigation through large directories of images or texture assets.
-- Zoom-to-cursor and panning for intuitive inspection at any scale.
-- **Directory tree sidebar** for browsing the filesystem without leaving the viewer.
-- **SVG** support for previewing scalable vector assets.
-- **Adjustable background** modes to improve visibility of transparent images.
-- **Duplicate finder** that locates exact and visually similar images across a directory tree using perceptual hashing.
-- **EXIF metadata** and **format-specific** information panel.
-- **PSD layer hierarchy** panel showing group structure, layer names, and visibility state.
-- Reasonable support for modern image formats, with limited support for older formats that refuse to die.
+- Fast, robust, minimalist, intuitive
+- Native, not Electron
+- Runs offline, no telemetry, no update pings, no cloud, no AI features, no nag screens
+- Read-only by design - never writes, moves or deletes a file
+- Keyboard-driven, with the full key map on screen at a keystroke
+- Duplicates finder - exact and visually similar, by perceptual hashing
+- Directory tree sidebar 
+
+<!-- Splits the list in two; -->
+
+- Full graphics pipeline (Photoshop, textures, HDR maps)
+- Adjustable background, sampling options
+- Color-managed from decode to screen (embedded ICC, NCLX primaries)
+- P3 wide-gamut support
+- HDR kept scene-referred and tone-mapped as it is drawn - three curves, exposure in stops
+- EDR output on macOS - highlights drawn above SDR white on a display with headroom
+- PSD / PSB streaming and tiled decoding
+- EXIF metadata
+- PSD layer hierarchy
+- File structure inspector (DDS / KTX / KTX2)
+- Variant picker for files carrying several renditions, such as the sizes inside an `.icns`
 
 ---
 

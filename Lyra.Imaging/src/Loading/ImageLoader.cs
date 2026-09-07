@@ -1,7 +1,9 @@
 using System.Collections.Concurrent;
 using Lyra.Common;
+using Lyra.Common.Estimation;
 using Lyra.Common.SystemExtensions;
 using Lyra.Imaging.Content;
+using Lyra.Imaging.Content.Tiling;
 
 namespace Lyra.Imaging.Loading;
 
@@ -278,12 +280,12 @@ internal class ImageLoader : IDisposable
     private async Task LoadImageAsync(Composite composite, CancellationToken ct)
     {
         var extension = composite.FileInfo.Extension;
-        var fileSize = composite.FileInfo.Length;
+        var fileSize = composite.FileSizeBytes;
 
         composite.ImageFormatType = ImageFormat.GetImageFormat(extension);
-        
-        composite.DecodeTimeEstimated = DecodeTimeEstimator.EstimateDecodeTime(extension, fileSize);
-        composite.TransferBytesTotal = fileSize;
+
+        composite.Timing.DecodeEstimateMs = fileSize is { } bytes ? DecodeTimeEstimator.EstimateDecodeTime(extension, bytes) : 0;
+        composite.Timing.TransferBytesTotal = fileSize ?? 0;
 
         composite.Completed += OnCompleted;
 
@@ -308,6 +310,12 @@ internal class ImageLoader : IDisposable
             var largeContent = composite.Content as RasterLargeContent;
             if (largeContent is not null)
                 largeContent.TilesProgressChanged += _ => composite.SignalProgress();
+            
+            if (composite.Content is VariantRasterContent variants)
+                variants.VariantReady += _ => composite.SignalProgress();
+            
+            if (largeContent?.TileSource is LazyTileSource lazyTiles)
+                lazyTiles.TileReady += _ => composite.SignalProgress();
 
             composite.SignalReady();
             
@@ -342,11 +350,11 @@ internal class ImageLoader : IDisposable
 
         void OnCompleted(Composite c)
         {
-            if (c.DecodeTimeMs is { } time)
-                DecodeTimeEstimator.RecordDecodeTime(extension, fileSize, time);
+            if (fileSize is { } bytes && c.Timing.DecodeMs is { } time)
+                DecodeTimeEstimator.RecordDecodeTime(extension, bytes, time);
 
-            if (c.TransferTimeMs is { } transfer)
-                SourceThroughputEstimator.RecordTransfer(c.FileInfo.FullName, c.TransferBytesRead, transfer);
+            if (c.Timing.TransferMs is { } transfer)
+                SourceThroughputEstimator.RecordTransfer(c.FileInfo.FullName, c.Timing.TransferBytesRead, transfer);
 
             c.Completed -= OnCompleted;
         }

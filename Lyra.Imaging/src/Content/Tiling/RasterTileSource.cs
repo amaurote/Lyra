@@ -1,6 +1,6 @@
 using SkiaSharp;
 
-namespace Lyra.Imaging.Content;
+namespace Lyra.Imaging.Content.Tiling;
 
 public sealed class RasterTileSource : ITileSource
 {
@@ -62,16 +62,16 @@ public sealed class RasterTileSource : ITileSource
         }
     }
 
-    public long VisibleByteSize(SKRect visibleFullRect, SKSize imageSize)
+    public long VisibleByteSize(SKRect visibleFullRect, SKSize imageSize, float pixelsPerFullUnit)
     {
         var total = 0L;
-        foreach (var tile in GetTiles(visibleFullRect, imageSize))
+        foreach (var tile in GetTiles(visibleFullRect, imageSize, pixelsPerFullUnit))
             total += RasterLargeContent.Bytes(tile.Image);
 
         return total;
     }
 
-    public IEnumerable<RasterTile> GetTiles(SKRect visibleFullRect, SKSize imageSize)
+    public IEnumerable<RasterTile> GetTiles(SKRect visibleFullRect, SKSize imageSize, float pixelsPerFullUnit)
     {
         if (visibleFullRect.IsEmpty)
             yield break;

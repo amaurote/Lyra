@@ -30,4 +30,21 @@ internal static class PixelCopy
                 .CopyTo(new Span<byte>(dst + (long)y * dstRowBytes, tightRowBytes));
         }
     }
+
+    /// <summary>
+    /// Copies rows of pixels into <paramref name="bitmap"/>, one at a time, taking as many bytes
+    /// per row as its color type implies and stepping the source by its own stride.
+    /// </summary>
+    public static unsafe void CopyRows(IntPtr source, long sourceStride, SKBitmap bitmap)
+    {
+        var width = bitmap.Width * Math.Max(1, bitmap.ColorType.GetBytesPerPixel());
+        var height = bitmap.Height;
+
+        var src = (byte*)source;
+        var dst = (byte*)bitmap.GetPixels();
+        var dstStride = bitmap.RowBytes;
+
+        for (long y = 0; y < height; y++)
+            Buffer.MemoryCopy(src + y * sourceStride, dst + y * dstStride, dstStride, width);
+    }
 }

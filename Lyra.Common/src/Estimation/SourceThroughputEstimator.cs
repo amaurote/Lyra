@@ -1,4 +1,4 @@
-namespace Lyra.Common;
+namespace Lyra.Common.Estimation;
 
 /// <summary>
 /// The application's read-speed history, one per process. All the behavior is in

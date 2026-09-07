@@ -1,4 +1,4 @@
-using Lyra.Common;
+using Lyra.Common.Estimation;
 using Lyra.Imaging.Content;
 
 namespace Lyra.Renderer.GUI.Presenters;
@@ -15,10 +15,10 @@ public readonly record struct LoadSnapshot(object? Identity, bool Active, double
         return new LoadSnapshot(
             composite,
             Active: true,
-            composite.ElapsedMs,
-            composite.DecodeTimeEstimated,
-            composite.TransferBytesTotal,
-            composite.TransferBytesRead,
+            composite.Timing.ElapsedMs,
+            composite.Timing.DecodeEstimateMs,
+            composite.Timing.TransferBytesTotal,
+            composite.Timing.TransferBytesRead,
             SourceThroughputEstimator.EstimateTransfer(composite.FileInfo.FullName)
         );
     }

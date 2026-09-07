@@ -1,6 +1,7 @@
+using Lyra.Common.Settings;
 using Lyra.Common.Settings.Enums;
 
-namespace Lyra.Common.Settings;
+namespace Lyra.SdlCore;
 
 public sealed class ViewState
 {
