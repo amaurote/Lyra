@@ -21,6 +21,10 @@
 - [Color Management](#color-management)
     - [What this means on a standard-gamut display](#what-this-means-on-a-standard-gamut-display)
     - [Rendering intent](#rendering-intent)
+- [HDR / EDR](#hdr--edr)
+    - [Tone mapping](#tone-mapping)
+    - [EDR output](#edr-output)
+    - [How much of an image stays as light](#how-much-of-an-image-stays-as-light)
 - [PSD / PSB Decoding Model](#psd--psb-decoding-model)
     - [PSD Color Mode Support](#psd-color-mode-support)
     - [PSB Support](#psb-support)
@@ -100,6 +104,7 @@ cannot be parallelised, so performance over a NAS or remote share will always be
 - HDR kept scene-referred and tone-mapped as it is drawn - three curves, exposure in stops
 - EDR output on macOS - highlights drawn above SDR white on a display with headroom
 - PSD / PSB streaming and tiled decoding
+- TIFF in depth - BigTIFF, multi-page documents, 1 to 64-bit samples, signed, unsigned or float
 - EXIF metadata
 - PSD layer hierarchy
 - File structure inspector (DDS / KTX / KTX2)
@@ -113,8 +118,14 @@ Lyra is built on .NET 9 with SDL3 for windowing and input, and SkiaSharp for har
 It is not an Electron app - there is no embedded browser, no web runtime, and no hidden resource overhead (and definitely no AI client).
 The architecture is designed around fast, non-blocking image loading:
 
-- Decoded images are cached and adjacent files are preloaded in the background, so navigation feels instant even in large directories.
-- Large PSD/PSB files use streaming and tiled decoding to avoid loading entire documents into memory - tested with files exceeding 3 GB.
+- Decoded images are cached and adjacent files are preloaded in the background, so navigation feels instant even in large
+  directories.
+- Large PSD/PSB files use streaming and tiled decoding to avoid loading entire documents into memory - tested with files
+  exceeding 3 GB.
+- Large TIFFs work the same way: BigTIFF is read natively, and a gray or eight-bit color sheet whose raster exceeds 256
+  MB is published as a streamed preview plus tiles decoded by region as the view asks for them. Sample layouts libtiff's
+  RGBA interface refuses - 10, 12 and 14-bit samples, 32 and 64-bit, IEEE float, one-bit color - are read at their own
+  depth instead, so a float TIFF reaches the HDR pipeline scene-referred rather than flattened to eight bits on the way in.
 
 Decoding is split into two layers. **Lyra.ManagedCodecs** is a pure-managed, dependency-free codec library that
 owns the formats Lyra decodes itself - TGA, Radiance HDR, and the GPU texture containers (DDS, KTX, KTX2) together
@@ -130,10 +141,6 @@ is **Basis Universal** (ETC1S / UASTC) supercompression carried in KTX2: rather 
 transcoder, Lyra wraps Binomial's open-source reference transcoder (Apache-2.0) in a small native wrapper.
 
 How these native libraries are shipped differs by platform - see [Native Libraries & Bundling](#native-libraries--bundling).
-
-> _Developer note:_ Lyra is designed and written simultaneously.
-> As a result, parts of the code reflect iterative exploration rather than a fully pre-planned architecture.
-> Refactoring is ongoing wherever it improves clarity or maintainability.
 
 ---
 
@@ -151,12 +158,12 @@ How these native libraries are shipped differs by platform - see [Native Librari
 
 ### Modern / Web-Friendly Formats
 
-| Format      | Description                                         | Extensions      | Notes                                                                                                                                                                 |
-|-------------|-----------------------------------------------------|-----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| AVIF        | High-efficiency image format based on AV1           | `.avif`         |                                                                                                                                                                       |
-| HEIF / HEIC | High-efficiency image container format (HEVC-based) | `.heif` `.heic` |                                                                                                                                                                       |
-| JPEG XL     | JPEG XL Image Coding System                         | `.jxl`          | Lyra displays static JPEG XL images. Animated JXL is decoded to its first frame only (same policy as JPEG 2000). HDR (floating-point) JXL is tone-mapped for display. |
-| WebP        | Compressed raster image format with optional alpha  | `.webp`         |                                                                                                                                                                       |
+| Format      | Description                                         | Extensions      | Notes                                                                                                                                                                                |
+|-------------|-----------------------------------------------------|-----------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| AVIF        | High-efficiency image format based on AV1           | `.avif`         |                                                                                                                                                                                      |
+| HEIF / HEIC | High-efficiency image container format (HEVC-based) | `.heif` `.heic` |                                                                                                                                                                                      |
+| JPEG XL     | JPEG XL Image Coding System                         | `.jxl`          | Lyra displays static JPEG XL images. Animated JXL is decoded to its first frame only (same policy as JPEG 2000). HDR (floating-point) JXL gets the full [HDR / EDR](#hdr--edr) path. |
+| WebP        | Compressed raster image format with optional alpha  | `.webp`         |                                                                                                                                                                                      |
 
 ### Document / Vector Formats
 
@@ -167,13 +174,10 @@ How these native libraries are shipped differs by platform - see [Native Librari
 
 ### High Dynamic Range Formats
 
-| Format       | Description                                     | Extensions |
-|--------------|-------------------------------------------------|------------|
-| OpenEXR      | High-dynamic range, multi-channel raster format | `.exr`     |
-| Radiance HDR | High-dynamic range RGBE format                  | `.hdr`     |
-
-> _Note:_ EXR and HDR images are tone-mapped for display using the **ACES filmic** curve, so high-dynamic-range
-> highlights roll off smoothly instead of clipping harshly to white.
+| Format       | Description                                     | Extensions | Notes                                                                                                                                                                 |
+|--------------|-------------------------------------------------|------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| OpenEXR      | High-dynamic range, multi-channel raster format | `.exr`     |                                                                                                                                                                       |
+| Radiance HDR | High-dynamic range RGBE format                  | `.hdr`     | EXR and Radiance HDR are kept as scene-referred light and tone-mapped as they are drawn, with the curve and exposure live in the sidebar. See [HDR / EDR](#hdr--edr). |
 
 ### GPU Formats
 
@@ -184,11 +188,11 @@ How these native libraries are shipped differs by platform - see [Native Librari
 
 ### Minor Formats
 
-| Format    | Description                   | Extensions                              | Notes                                                                                                                                                   |
-|-----------|-------------------------------|-----------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
-| ICO       | Icon container format         | `.ico`                                  |                                                                                                                                                         |
-| ICNS      | Apple icon container format   | `.icns`                                 | Every size in the container is decoded and selectable from the sidebar's **Sizes** dropdown. Reads PNG, JPEG 2000, ARGB and the legacy RLE24 plates with their masks. |
-| JPEG 2000 | Wavelet-based image format    | `.jp2` `.jpg2`<br/>`.j2k` `.j2c` `.jpc` | Lyra supports single-image JPEG 2000 files. Multi-image, animated, or compound JPEG 2000 formats (JPX, JPM, MJ2, JPIP) are intentionally NOT supported. |
+| Format    | Description                 | Extensions                              | Notes                                                                                                                                                                 |
+|-----------|-----------------------------|-----------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ICO       | Icon container format       | `.ico`                                  |                                                                                                                                                                       |
+| ICNS      | Apple icon container format | `.icns`                                 | Every size in the container is decoded and selectable from the sidebar's **Sizes** dropdown. Reads PNG, JPEG 2000, ARGB and the legacy RLE24 plates with their masks. |
+| JPEG 2000 | Wavelet-based image format  | `.jp2` `.jpg2`<br/>`.j2k` `.j2c` `.jpc` | Lyra supports single-image JPEG 2000 files. Multi-image, animated, or compound JPEG 2000 formats (JPX, JPM, MJ2, JPIP) are intentionally NOT supported.               |
 
 ---
 
@@ -234,9 +238,65 @@ survive, at the cost of desaturating colors that were perfectly reproducible to 
 the preservation of differences, and Lyra does not make that trade: accuracy for the colors a display can show takes
 precedence over a hint of the ones it cannot.
 
-> _Note:_ Gamut and dynamic range are separate concerns. High-dynamic-range sources (EXR, Radiance HDR, BC6H, float
-> textures, HDR JPEG XL) are additionally tone-mapped for display as described in their sections above; that handles
-> brightness range, not color gamut.
+---
+
+## HDR / EDR
+
+HDR images are held as **scene-referred light** - linear half-float, the values the file actually carries, with
+nothing clamped or curved at decode. The mapping to the display happens in a shader, per frame, at draw time. So
+changing the curve or the exposure is a repaint.
+
+This covers every high-dynamic-range source Lyra decodes:
+
+| Source                 | Formats                                                                                                        |
+|------------------------|----------------------------------------------------------------------------------------------------------------|
+| Scene-referred raster  | OpenEXR `.exr`, Radiance HDR `.hdr`                                                                            |
+| Floating-point JPEG XL | `.jxl` decoded to float                                                                                        |
+| HDR textures           | BC6H (signed + unsigned), RGBA16F / RGBA32F, R16F / R32F, RGB16F, RG11B10, RGB9E5 - in `.dds`, `.ktx`, `.ktx2` |
+
+### Tone mapping
+
+| Curve                     | What it does                                                                                                           |
+|---------------------------|------------------------------------------------------------------------------------------------------------------------|
+| **ACES filmic** (default) | Highlights roll off smoothly instead of clipping harshly to white.                                                     |
+| **Reinhard extended**     | The white point is measured from the image, so the top of the output range is spent on whatever is actually brightest. |
+| **Clip**                  | No curve - clip at white and encode.                                                                                   |
+
+The curve is applied to **luminance**, not per channel, and the channels are then scaled by that one factor.
+Curving each channel separately compresses the largest hardest and drags bright color toward neutral; this does not.
+
+**Exposure** applies a 2^n multiply before the curve, from -8 to +8 stops. This is the control that matters for
+scene-referred content: an environment map's sun can sit thousands of times brighter than its sky, and pulling
+exposure down moves both back onto the curve's slope, so the sun resolves into a disc instead of merging into the
+sky.
+
+### EDR output
+
+On a display with headroom, Lyra draws highlights **above SDR white** rather than compressing them into it - the
+sun in an EXR is rendered as brighter than the page's white.
+
+> _Note:_ macOS only, for now. It needs an extended-range Metal surface (`RGBA16Float`, extended Display P3), which Lyra
+> uses for the whole run on every display. macOS OpenGL has no extended-range path, so the `opengl` backend preference
+> disables EDR. Windows (DXGI scRGB / HDR10) and Linux (Wayland color management) are not implemented yet - there, the
+> SDR curve above is what you get.
+
+### How much of an image stays as light
+
+Half-float costs 8 bytes per pixel against 4 for a tone-mapped 8-bit image, so image size decides how much of it
+can be kept as light:
+
+| Image size                                                                                                                | Held as                                                                 | Result                                                                                |
+|---------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------|---------------------------------------------------------------------------------------|
+| Up to 32 MP                                                                                                               | One scene-referred half-float texture                                   | Live controls and EDR at every zoom level                                             |
+| Above that, while it fits a quarter of the decoded-image cache (a 128 MP panorama is 1 GB, and does on a typical machine) | Scene-referred preview **plus** scene-referred tiles                    | Live controls and EDR at every zoom level                                             |
+| Larger                                                                                                                    | Curve baked in at decode; only the display-sized preview stays as light | Controls and EDR apply at fit-to-window; zooming in steps down to the baked rendering |
+
+When an image is too large to hold as light, the **HDR Decode** section says so in place of the controls rather
+than disappearing. The cache budget is derived from installed RAM, so the middle row's ceiling is higher on a
+larger machine.
+
+> _Note:_ Thumbnails are always tone-mapped to 8-bit, deliberately - they feed perceptual hashing for the
+> duplicates finder, which wants stable pixels.
 
 ---
 
@@ -368,9 +428,8 @@ block mode and partition.
 Decoding is **faithful** - no color transform is applied, so an sRGB source decodes to sRGB-tagged bytes and the
 display path linearizes.
 
-- **HDR formats** (BC6H, RGBA16F / RGBA32F, and the packed float formats) are scene-referred float and are
-  tone-mapped with the same **ACES filmic** curve used for EXR and Radiance HDR, so highlights roll off smoothly
-  instead of clipping.
+- **HDR formats** (BC6H, RGBA16F / RGBA32F, and the packed float formats) are scene-referred float and go through
+  the same draw-time path as EXR and Radiance HDR - live curve, exposure, and EDR. See [HDR / EDR](#hdr--edr).
 - **Signed (`snorm`) formats** - common in bump / normal maps - are remapped from `[-1, 1]` to `[0, 1]`, which
   avoids the "shifted color" look some viewers produce by rendering the raw signed bytes as unsigned.
 
