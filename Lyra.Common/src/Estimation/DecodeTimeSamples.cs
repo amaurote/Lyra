@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Globalization;
+using System.Numerics;
 using Tomlyn;
 using Tomlyn.Model;
 using Tomlyn.Parsing;
@@ -7,14 +8,15 @@ using Tomlyn.Parsing;
 namespace Lyra.Common.Estimation;
 
 /// <summary>
-/// A rolling history of decode durations, bucketed by format and file size, persisted as TOML.
+/// A rolling history of decode durations, bucketed by format and by the amount of work decode
+/// represented, persisted as TOML.
 ///
 /// Decode only: the time spent fetching the file is measured separately and excluded, because it
 /// belongs to the source rather than the format.
 /// </summary>
 public sealed class DecodeTimeSamples
 {
-    private const int SchemaVersion = 2;
+    private const int SchemaVersion = 3;
 
     private const string VersionKey = "version";
 
@@ -26,9 +28,31 @@ public sealed class DecodeTimeSamples
     /// <summary>Persisted samples per bucket (compact, representative).</summary>
     private const int PersistedSamplesPerBucket = 7;
 
+    /// <summary>Bucket 1 is everything up to 256 KB, then 512 KB, 1 MB, 2 MB, and so on.</summary>
+    private const long BytesPerBucketUnit = 256_000;
+
+    /// <summary>Bucket 1 is everything up to 256x256, then 512x256, 512x512, and so on.</summary>
+    private const long PixelsPerBucketUnit = 65_536;
+
+    /// <summary>
+    /// A ceiling on what may be predicted. Scaling from a distant bucket is a straight line
+    /// through evidence gathered somewhere else on the curve, and a bad one must degrade into a
+    /// bar that finishes late rather than one that claims an hour.
+    /// </summary>
+    private const double MaxEstimateMs = 10 * 60 * 1000;
+
+    private const string BytesTableKey = "bytes";
+    private const string PixelsTableKey = "pixels";
+
+    private enum Metric
+    {
+        Bytes,
+        Pixels
+    }
+
     private readonly string _filePath;
 
-    private readonly ConcurrentDictionary<(string Format, int SizeBucket), List<double>> _samples = new();
+    private readonly ConcurrentDictionary<(string Format, Metric Metric, int Bucket), List<double>> _samples = new();
 
     private readonly Lock _saveLock = new();
 
@@ -40,20 +64,15 @@ public sealed class DecodeTimeSamples
         Load();
     }
     
-    public void Record(string extension, long sizeInBytes, double ms)
+    public void Record(string extension, long sizeInBytes, long? pixels, double ms)
     {
-        if (ms <= 0 || !TryGetKey(extension, sizeInBytes, out var key))
+        if (ms <= 0 || !TryGetFormat(extension, out var format))
             return;
 
-        var list = _samples.GetOrAdd(key, _ => []);
-        lock (list)
-        {
-            list.Add(ms);
-            Logger.Debug($"[DecodeTimeSamples] Recorded: {key.Format}, {sizeInBytes} bytes, {ms} ms.");
+        RecordSample(format, Metric.Bytes, Bucket(sizeInBytes, BytesPerBucketUnit), sizeInBytes, ms);
 
-            if (list.Count > MaxSamplesPerBucket)
-                list.RemoveAt(0);
-        }
+        if (pixels is > 0)
+            RecordSample(format, Metric.Pixels, Bucket(pixels.Value, PixelsPerBucketUnit), pixels.Value, ms);
 
         if (Interlocked.Increment(ref _unsavedChanges) >= UnsavedChangesThreshold)
         {
@@ -62,27 +81,74 @@ public sealed class DecodeTimeSamples
         }
     }
 
-    /// <summary>
-    /// What this format and size should take. Falls back to the nearest size bucket for the same
-    /// format, since a format's cost per byte varies far less than it does between formats.
-    /// </summary>
-    public double Estimate(string extension, long sizeInBytes)
+    private void RecordSample(string format, Metric metric, int bucket, long magnitude, double ms)
     {
-        if (!TryGetKey(extension, sizeInBytes, out var key))
+        var list = _samples.GetOrAdd((format, metric, bucket), _ => []);
+        lock (list)
+        {
+            list.Add(ms);
+            Logger.Debug($"[DecodeTimeSamples] Recorded: {format}, {magnitude} {metric.ToString().ToLowerInvariant()}, {ms} ms.");
+
+            if (list.Count > MaxSamplesPerBucket)
+                list.RemoveAt(0);
+        }
+    }
+
+    /// <summary>
+    /// What this format and this much work should take. Pixels answer when the caller has them,
+    /// since they predict far better than compressed bytes do; otherwise the byte-keyed history
+    /// carries the estimate until a decoder reads the header and comes back with the real size.
+    /// </summary>
+    public double Estimate(string extension, long sizeInBytes, long? pixels = null)
+    {
+        if (!TryGetFormat(extension, out var format))
             return 0;
 
-        if (_samples.TryGetValue(key, out var exact))
+        if (pixels is > 0 && EstimateFor(format, Metric.Pixels, pixels.Value, PixelsPerBucketUnit) is var byPixels and > 0)
+            return byPixels;
+
+        return EstimateFor(format, Metric.Bytes, sizeInBytes, BytesPerBucketUnit);
+    }
+    
+    private double EstimateFor(string format, Metric metric, long magnitude, long unit)
+    {
+        var bucket = Bucket(magnitude, unit);
+
+        if (_samples.TryGetValue((format, metric, bucket), out var exact))
             return Typical(exact);
 
-        var nearest = _samples.Keys
-            .Where(k => k.Format.Equals(key.Format, StringComparison.OrdinalIgnoreCase))
-            .Select(k => k.SizeBucket)
-            .DefaultIfEmpty(-1)
-            .MinBy(bucket => Math.Abs(bucket - key.SizeBucket));
+        var nearest = NearestBucket(format, metric, bucket);
+        if (nearest <= 0 || !_samples.TryGetValue((format, metric, nearest), out var fallback))
+            return 0;
 
-        return nearest >= 0 && _samples.TryGetValue((key.Format, nearest), out var fallback)
-            ? Typical(fallback)
-            : 0;
+        var typical = Typical(fallback);
+        if (typical <= 0)
+            return 0;
+
+        return Math.Min(MaxEstimateMs, typical * bucket / nearest);
+    }
+    
+    private int NearestBucket(string format, Metric metric, int bucket)
+    {
+        var target = BitOperations.Log2((uint)bucket);
+
+        var best = -1;
+        var bestDistance = int.MaxValue;
+
+        foreach (var key in _samples.Keys)
+        {
+            if (key.Metric != metric || !key.Format.Equals(format, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            var distance = Math.Abs(BitOperations.Log2((uint)key.Bucket) - target);
+            if (distance < bestDistance || (distance == bestDistance && key.Bucket > best))
+            {
+                bestDistance = distance;
+                best = key.Bucket;
+            }
+        }
+
+        return best;
     }
 
     /// <summary>
@@ -143,7 +209,7 @@ public sealed class DecodeTimeSamples
             [VersionKey] = SchemaVersion
         };
 
-        var snapshot = new Dictionary<(string Format, int Bucket), List<double>>();
+        var snapshot = new Dictionary<(string Format, Metric Metric, int Bucket), List<double>>();
         foreach (var entry in _samples)
         {
             var list = entry.Value;
@@ -156,27 +222,33 @@ public sealed class DecodeTimeSamples
                      .OrderBy(g => g.Key, StringComparer.OrdinalIgnoreCase)
                 )
         {
-            var formatKey = formatGroup.Key.ToLowerInvariant();
-
             var formatTable = new TomlTable();
-            var wroteBucket = false;
 
-            foreach (var bucketEntry in formatGroup.OrderBy(x => x.Key.Bucket))
+            foreach (var metric in (Metric[])[Metric.Bytes, Metric.Pixels])
             {
-                var samples = bucketEntry.Value;
-                if (samples.Count == 0)
-                    continue;
+                var metricTable = new TomlTable();
+                var wroteBucket = false;
 
-                var arr = new TomlArray();
-                foreach (var v in SelectRepresentativeSamples(samples, PersistedSamplesPerBucket))
-                    arr.Add((int)Math.Round(v, MidpointRounding.AwayFromZero));
+                foreach (var bucketEntry in formatGroup.Where(x => x.Key.Metric == metric).OrderBy(x => x.Key.Bucket))
+                {
+                    var samples = bucketEntry.Value;
+                    if (samples.Count == 0)
+                        continue;
 
-                formatTable[bucketEntry.Key.Bucket.ToString(CultureInfo.InvariantCulture)] = arr;
-                wroteBucket = true;
+                    var arr = new TomlArray();
+                    foreach (var v in SelectRepresentativeSamples(samples, PersistedSamplesPerBucket))
+                        arr.Add((int)Math.Round(v, MidpointRounding.AwayFromZero));
+
+                    metricTable[bucketEntry.Key.Bucket.ToString(CultureInfo.InvariantCulture)] = arr;
+                    wroteBucket = true;
+                }
+
+                if (wroteBucket)
+                    formatTable[MetricKey(metric)] = metricTable;
             }
 
-            if (wroteBucket)
-                root[formatKey] = formatTable;
+            if (formatTable.Count > 0)
+                root[formatGroup.Key.ToLowerInvariant()] = formatTable;
         }
 
         return TomlSerializer.Serialize(root, LyraTomlContext.Default.TomlTable);
@@ -211,17 +283,25 @@ public sealed class DecodeTimeSamples
         }
 
         var model = TomlSerializer.Deserialize(text, LyraTomlContext.Default.TomlTable)!;
-        if (model.TryGetValue(VersionKey, out var version) && Convert.ToInt32(version) == SchemaVersion)
-        {
-            ReadFormats(model);
-            return;
-        }
+        var version = model.TryGetValue(VersionKey, out var value) ? Convert.ToInt32(value) : 0;
 
-        Logger.Info("[DecodeTimeSamples] Time data is from an older schema; starting fresh.");
-        _samples.Clear();
+        switch (version)
+        {
+            case SchemaVersion:
+                ReadFormats(model);
+                return;
+            case 2:
+                Logger.Info("[DecodeTimeSamples] Time data is from schema 2; keeping it as the byte-keyed history.");
+                ReadLegacyByteFormats(model);
+                return;
+            default:
+                Logger.Info("[DecodeTimeSamples] Time data is from an older schema; starting fresh.");
+                _samples.Clear();
+                return;
+        }
     }
 
-    private void ReadFormats(TomlTable model)
+    private void ReadLegacyByteFormats(TomlTable model)
     {
         _samples.Clear();
 
@@ -230,59 +310,101 @@ public sealed class DecodeTimeSamples
             if (formatEntry.Value is not TomlTable bucketsTable)
                 continue; // The version key, or anything else that is not a format table.
 
+            ReadBuckets(formatEntry.Key.ToLowerInvariant(), Metric.Bytes, bucketsTable);
+        }
+    }
+
+    private void ReadFormats(TomlTable model)
+    {
+        _samples.Clear();
+
+        foreach (var formatEntry in model)
+        {
+            if (formatEntry.Value is not TomlTable metricsTable)
+                continue; // The version key, or anything else that is not a format table.
+
             var format = formatEntry.Key.ToLowerInvariant();
 
-            foreach (var bucketEntry in bucketsTable)
+            foreach (var metricEntry in metricsTable)
             {
-                if (!int.TryParse(bucketEntry.Key, NumberStyles.Integer, CultureInfo.InvariantCulture, out var bucket) || bucket <= 0)
-                    continue; // Anything that is not a size bucket.
-
-                if (bucketEntry.Value is not TomlArray arr)
+                if (metricEntry.Value is not TomlTable bucketsTable || !TryReadMetric(metricEntry.Key, out var metric))
                     continue;
 
-                var list = new List<double>(arr.Count);
-                foreach (var v in arr)
-                {
-                    switch (v)
-                    {
-                        case double d and > 0: list.Add(d); break;
-                        case float f and > 0: list.Add(f); break;
-                        case long l and > 0: list.Add(l); break;
-                        case int i and > 0: list.Add(i); break;
-                    }
-                }
-
-                if (list.Count == 0)
-                    continue;
-
-                // Loaded samples become our rolling history; cap it.
-                if (list.Count > MaxSamplesPerBucket)
-                    list = list.Skip(list.Count - MaxSamplesPerBucket).ToList();
-
-                _samples[(format, bucket)] = list;
+                ReadBuckets(format, metric, bucketsTable);
             }
         }
     }
 
-    /// <summary>Bucket sizes: 256KB, 512KB, 1MB, 2MB, 4MB, and so on.</summary>
-    private static int GetSizeBucket(long sizeInBytes)
+    private void ReadBuckets(string format, Metric metric, TomlTable bucketsTable)
     {
-        if (sizeInBytes <= 0)
-            return 1;
+        foreach (var bucketEntry in bucketsTable)
+        {
+            if (!int.TryParse(bucketEntry.Key, NumberStyles.Integer, CultureInfo.InvariantCulture, out var bucket) || bucket <= 0)
+                continue; // Anything that is not a size bucket.
 
-        var bucket = (int)Math.Pow(2, Math.Ceiling(Math.Log(sizeInBytes / 256000.0, 2)));
-        return Math.Max(bucket, 1);
+            if (bucketEntry.Value is not TomlArray arr)
+                continue;
+
+            var list = new List<double>(arr.Count);
+            foreach (var v in arr)
+            {
+                switch (v)
+                {
+                    case double d and > 0: list.Add(d); break;
+                    case float f and > 0: list.Add(f); break;
+                    case long l and > 0: list.Add(l); break;
+                    case int i and > 0: list.Add(i); break;
+                }
+            }
+
+            if (list.Count == 0)
+                continue;
+
+            // Loaded samples become our rolling history; cap it.
+            if (list.Count > MaxSamplesPerBucket)
+                list = list.Skip(list.Count - MaxSamplesPerBucket).ToList();
+
+            _samples[(format, metric, bucket)] = list;
+        }
     }
 
-    private static bool TryGetKey(string extension, long sizeInBytes, out (string Format, int SizeBucket) key)
+    private static string MetricKey(Metric metric) => metric == Metric.Pixels ? PixelsTableKey : BytesTableKey;
+
+    private static bool TryReadMetric(string key, out Metric metric)
     {
-        key = default;
+        switch (key.ToLowerInvariant())
+        {
+            case BytesTableKey:
+                metric = Metric.Bytes;
+                return true;
+            case PixelsTableKey:
+                metric = Metric.Pixels;
+                return true;
+            default:
+                metric = default;
+                return false;
+        }
+    }
+
+    /// <summary>Bucket sizes: 256KB, 512KB, 1MB, 2MB, 4MB, and so on.</summary>
+    private static int Bucket(long magnitude, long unit)
+    {
+        if (magnitude <= unit)
+            return 1;
+
+        var exponent = (int)Math.Ceiling(Math.Log2((double)magnitude / unit));
+        return 1 << Math.Clamp(exponent, 0, 30);
+    }
+
+    private static bool TryGetFormat(string extension, out string format)
+    {
+        format = string.Empty;
 
         var formatType = ImageFormat.GetImageFormat(extension);
         if (formatType == ImageFormatType.Unknown)
             return false;
 
-        key = (formatType.ToString().ToLowerInvariant(), GetSizeBucket(sizeInBytes));
+        format = formatType.ToString().ToLowerInvariant();
         return true;
     }
 

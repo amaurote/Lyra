@@ -59,6 +59,8 @@ internal class JxlDecoder : IImageDecoder
 
                     DecoderValidation.RequireSaneDimensions("JxlDecoder", width, height);
 
+                    composite.ReportPixelCount(width, height);
+
                     ct.ThrowIfCancellationRequested();
 
                     composite.AddFormatSpecific("Bit Depth", $"{bitsPerSample}-bit");

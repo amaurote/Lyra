@@ -38,6 +38,9 @@ internal sealed class TiffDecoder : IImageDecoder, IThumbnailDecoder
             var directories = TiffNative.DescribeDirectories(path, IntPtr.Zero, 0);
             var pages = TiffPageSet.Pages(directories);
 
+            if (pages.Count > 0 && directories.Count > pages[0])
+                composite.ReportPixelCount((long)directories[pages[0]].Width, (long)directories[pages[0]].Height);
+
             if (pages.Count > 1)
             {
                 DecodeDocument(path, composite, directories, pages, ct);

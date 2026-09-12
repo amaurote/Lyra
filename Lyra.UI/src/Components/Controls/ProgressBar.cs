@@ -23,6 +23,7 @@ public sealed class ProgressBar : ComponentBase
 
     private float _value;
     private bool _indeterminate;
+    private long _sweepStartedAt;
     private SKColor _color = Palette.Foreground;
 
     /// <summary>How full the bar is, from 0 to 1. Clamped; ignored while indeterminate.</summary>
@@ -36,7 +37,13 @@ public sealed class ProgressBar : ComponentBase
     public bool Indeterminate
     {
         get => _indeterminate;
-        set => Set(ref _indeterminate, value);
+        set
+        {
+            if (value && !_indeterminate)
+                _sweepStartedAt = Stopwatch.GetTimestamp();
+
+            Set(ref _indeterminate, value);
+        }
     }
 
     /// <summary>Color of the filled portion. The track is drawn from this, dimmed.</summary>
@@ -79,17 +86,18 @@ public sealed class ProgressBar : ComponentBase
     }
 
     /// <summary>
-    /// A block crossing the track and back. Driven by the wall clock rather than a frame count so
-    /// it moves at the same speed whatever the frame rate, and so it needs no state to reset.
+    /// A block crossing the track and back, starting from the left edge at the moment the sweep
+    /// was turned on. Driven by the wall clock rather than a frame count so it moves at the same
+    /// speed whatever the frame rate.
     /// </summary>
-    private static SKRect SweepBounds(SKRect track)
+    private SKRect SweepBounds(SKRect track)
     {
         var sweep = track.Width * SweepFraction;
         var travel = track.Width - sweep;
         if (travel <= 0)
             return track;
 
-        var seconds = Stopwatch.GetTimestamp() / TicksPerSecond % (SweepSeconds * 2);
+        var seconds = (Stopwatch.GetTimestamp() - _sweepStartedAt) / TicksPerSecond % (SweepSeconds * 2);
         var phase = seconds / SweepSeconds;
 
         var t = phase <= 1 ? phase : 2 - phase;

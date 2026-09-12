@@ -66,6 +66,8 @@ internal class J2KDecoder : IImageDecoder
                     DecoderValidation.RequireSaneDimensions("J2KDecoder", width, height);
                     DecoderValidation.RequireValidStride("J2KDecoder", nativeStrideBytes, width);
 
+                    composite.ReportPixelCount(width, height);
+
                     ct.ThrowIfCancellationRequested();
 
                     var colorSpace = ResolveIccColorSpace(nativeIcc, iccSize);

@@ -29,6 +29,8 @@ internal class HeifDecoder : IImageDecoder, IThumbnailDecoder
 
             PopulateFormatSpecific(composite, heifContext, imageHandle, path);
 
+            composite.ReportPixelCount(imageHandle.Width, imageHandle.Height);
+
             // Decode as 8-bit RGBA interleaved.
             using var decodedImage = imageHandle.Decode(HeifColorspace.Rgb, HeifChroma.InterleavedRgba32);
 

@@ -67,6 +67,7 @@ internal class PsdDecoder : IImageDecoder
 
             composite.FullWidth = header.Width;
             composite.FullHeight = header.Height;
+            composite.ReportPixelCount(header.Width, header.Height);
             composite.AddFormatSpecific("Color Mode", $"{header.ColorMode}");
             composite.AddFormatSpecific("Channels", $"{header.NumberOfChannels}");
             composite.AddFormatSpecific("Depth per Channel", $"{header.Depth}-bit");

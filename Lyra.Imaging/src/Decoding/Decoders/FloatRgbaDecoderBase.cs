@@ -31,6 +31,8 @@ internal abstract class FloatRgbaDecoderBase : IImageDecoder
         var width = pixels.Width;
         var height = pixels.Height;
         DecoderValidation.RequireSaneDimensions(GetType().Name, width, height, bytesPerPixel: sizeof(float) * 4);
+
+        composite.ReportPixelCount(width, height);
         
         var content = HdrImageBuilder.Build(pixels.AsSpan(), width, height, composite, ct, out var isGrayscale);
 

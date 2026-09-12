@@ -39,6 +39,8 @@ internal class SkiaDecoder : IImageDecoder, IThumbnailDecoder
                 return Task.CompletedTask;
             }
 
+            composite.ReportPixelCount(codec.Info.Width, codec.Info.Height);
+
             var srcColorSpace = codec.Info.ColorSpace ?? SKColorSpace.CreateSrgb();
             var info = new SKImageInfo(codec.Info.Width, codec.Info.Height, SKColorType.Rgba8888, SKAlphaType.Premul, srcColorSpace);
             var bitmap = new SKBitmap(info);

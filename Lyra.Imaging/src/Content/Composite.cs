@@ -30,11 +30,16 @@ public sealed class Composite : IDisposable
     public float? FullHeight;
 
     public LoadMeasurement Timing { get; } = new();
+    
+    public long? PixelCount => Volatile.Read(ref _pixelCount) is var pixels and > 0 ? pixels : null;
+
+    private long _pixelCount;
 
     public CompositeState State = CompositeState.Pending;
 
     public event Action<Composite>? Completed;
     public event Action<Composite>? ProgressChanged;
+    internal event Action<Composite>? PixelCountReported;
 
     /// <summary>
     /// A decode that outlives the call that started it - the PSD layer pass is the one - so that
@@ -112,6 +117,18 @@ public sealed class Composite : IDisposable
         {
             return _formatSpecific.ToList();
         }
+    }
+    
+    public void ReportPixelCount(long width, long height)
+    {
+        if (width <= 0 || height <= 0)
+            return;
+
+        var pixels = width * height;
+        if (Interlocked.Exchange(ref _pixelCount, pixels) == pixels)
+            return;
+
+        PixelCountReported?.Invoke(this);
     }
 
     /// <inheritdoc cref="LoadMeasurement.ReportTransferred"/>

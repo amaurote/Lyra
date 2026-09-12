@@ -288,6 +288,7 @@ internal class ImageLoader : IDisposable
         composite.Timing.TransferBytesTotal = fileSize ?? 0;
 
         composite.Completed += OnCompleted;
+        composite.PixelCountReported += OnPixelCountReported;
 
         try
         {
@@ -347,17 +348,38 @@ internal class ImageLoader : IDisposable
         }
 
         return;
+        
+        void OnPixelCountReported(Composite c)
+        {
+            if (fileSize is not { } bytes)
+                return;
+
+            c.Timing.DecodeEstimateMs = DecodeTimeEstimator.EstimateDecodeTime(extension, bytes, c.PixelCount);
+            c.SignalProgress();
+        }
 
         void OnCompleted(Composite c)
         {
             if (fileSize is { } bytes && c.Timing.DecodeMs is { } time)
-                DecodeTimeEstimator.RecordDecodeTime(extension, bytes, time);
+                DecodeTimeEstimator.RecordDecodeTime(extension, bytes, PixelsOf(c), time);
 
             if (c.Timing.TransferMs is { } transfer)
                 SourceThroughputEstimator.RecordTransfer(c.FileInfo.FullName, c.Timing.TransferBytesRead, transfer);
 
+            c.PixelCountReported -= OnPixelCountReported;
             c.Completed -= OnCompleted;
         }
+    }
+
+    private static long? PixelsOf(Composite composite)
+    {
+        if (composite.PixelCount is { } reported)
+            return reported;
+
+        var width = (long)composite.LogicalWidth;
+        var height = (long)composite.LogicalHeight;
+
+        return width > 0 && height > 0 ? width * height : null;
     }
 
     #endregion

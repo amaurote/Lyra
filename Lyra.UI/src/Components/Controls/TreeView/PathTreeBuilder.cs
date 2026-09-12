@@ -75,6 +75,17 @@ public static class PathTreeBuilder
     }
 
     /// <summary>
+    /// Re-sorts every node's children, and the roots, by <paramref name="key"/>.
+    /// </summary>
+    public static void SortSiblings<T>(List<TreeNode<T>> roots, Func<T, string> key, StringComparer comparer)
+    {
+        roots.Sort((a, b) => comparer.Compare(key(a.Data), key(b.Data)));
+
+        foreach (var root in roots)
+            SortSiblings(root.Children, key, comparer);
+    }
+
+    /// <summary>
     /// Collapses chains of single-child nodes where isCollapsible returns true.
     /// mergeData combines parent + child data when collapsing (called iteratively
     /// for chains longer than 2).
