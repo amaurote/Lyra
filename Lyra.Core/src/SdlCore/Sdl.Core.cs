@@ -174,7 +174,7 @@ public partial class SdlCore : IDisposable
 
     private void OnDisplayCapabilitiesChanged(DisplayCapabilities capabilities)
     {
-        Logger.Debug($"[Core] {capabilities}");
+        Logger.Info($"[Core] {capabilities}");
 
         if (_headroomReported || !capabilities.HasHeadroomNow)
             return;
